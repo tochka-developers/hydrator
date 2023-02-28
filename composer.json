@@ -1,0 +1,47 @@
+{
+    "name": "tochka-developers/hydrator",
+    "description": "Hydrator for JsonRpc server and JsonRpc client",
+    "type": "package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Babushkin Pavel",
+            "email": "darkdarin@tochka.com"
+        }
+    ],
+    "require": {
+        "php": "8.0.*|8.1.*|8.2.*",
+        "doctrine/annotations": "^1.11",
+        "illuminate/container": "^9.0|^10.0",
+        "illuminate/contracts": "^9.0|^10.0",
+        "illuminate/support": "^9.0|^10.0",
+        "jetbrains/phpstorm-attributes": "^1.0",
+        "phpdocumentor/reflection-docblock": "^3.0|^4.0|^5.0",
+        "phpdocumentor/type-resolver": "^1.5",
+        "spiral/attributes": "^2.8"
+    },
+    "require-dev": {
+        "bensampo/laravel-enum": "^5.0|^6.0",
+        "orchestra/testbench": "^7.1|^8.0",
+        "laravel/pint": "^1.4",
+        "mockery/mockery": "^1.5",
+        "phpunit/phpunit": "^9.6",
+        "roave/security-advisories": "dev-latest",
+        "vimeo/psalm": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tochka\\Hydrator\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tochka\\Hydrator\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "lint": "pint --test",
+        "lint-fix": "pint",
+        "analyze": "psalm --no-cache"
+    }
+}
