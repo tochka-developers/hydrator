@@ -39,7 +39,7 @@ class TypeDefinitionFactory implements TypeDefinitionFactoryInterface
             $typeDefinition = $this->getParameterTypeFromReflection($reflectionType);
             $typeDefinition->setNullable($reflectionType->allowsNull());
         } else {
-            $typeDefinition = new TypeDefinition(ScalarTypeEnum::TYPE_MIXED());
+            $typeDefinition = new TypeDefinition(ScalarTypeEnum::TYPE_MIXED);
             $typeDefinition->setNullable(true);
         }
 
@@ -53,7 +53,7 @@ class TypeDefinitionFactory implements TypeDefinitionFactoryInterface
     {
         $typeDefinition = new TypeDefinition(ScalarTypeEnum::fromReflectionType($reflectionType));
 
-        if ($typeDefinition->getScalarType()->is(ScalarTypeEnum::TYPE_OBJECT()) && !$reflectionType->isBuiltin()) {
+        if ($typeDefinition->getScalarType() === ScalarTypeEnum::TYPE_OBJECT && !$reflectionType->isBuiltin()) {
             $typeDefinition->setClassName($reflectionType->getName());
 
             if (interface_exists($reflectionType->getName())) {
@@ -71,7 +71,7 @@ class TypeDefinitionFactory implements TypeDefinitionFactoryInterface
     public function getFromDocBlock(?Type $typeDefinition): TypeDefinition|UnionTypeDefinition
     {
         if ($typeDefinition === null) {
-            return new TypeDefinition(ScalarTypeEnum::TYPE_MIXED());
+            return new TypeDefinition(ScalarTypeEnum::TYPE_MIXED);
         }
 
         if ($typeDefinition instanceof Compound) {

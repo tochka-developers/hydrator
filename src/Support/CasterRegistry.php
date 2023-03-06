@@ -7,7 +7,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Tochka\Hydrator\Contracts\CasterRegistryInterface;
 use Tochka\Hydrator\Contracts\ExtractCasterInterface;
 use Tochka\Hydrator\Contracts\HydrateCasterInterface;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
 use Tochka\Hydrator\DTO\TypeDefinition;
 use Tochka\Hydrator\DTO\UnionTypeDefinition;
 use Tochka\Hydrator\Exceptions\CasterImplementsException;
@@ -44,7 +44,7 @@ class CasterRegistry implements CasterRegistryInterface
         }
     }
 
-    public function getGlobalHydrateCaster(CastInfo $castInfo): ?string
+    public function getGlobalHydrateCaster(CastInfoInterface $castInfo): ?string
     {
         foreach ($this->globalHydrateCasters as $casterName => $caster) {
             if ($caster->canHydrate($castInfo)) {
@@ -55,7 +55,7 @@ class CasterRegistry implements CasterRegistryInterface
         return null;
     }
 
-    public function getGlobalExtractCaster(CastInfo $castInfo): ?string
+    public function getGlobalExtractCaster(CastInfoInterface $castInfo): ?string
     {
         foreach ($this->globalExtractCasters as $casterName => $caster) {
             if ($caster->canExtract($castInfo)) {
@@ -66,8 +66,10 @@ class CasterRegistry implements CasterRegistryInterface
         return null;
     }
 
-    public function getTypeAfterHydrate(string $casterName, CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
-    {
+    public function getTypeAfterHydrate(
+        string $casterName,
+        CastInfoInterface $castInfo
+    ): TypeDefinition|UnionTypeDefinition {
         if (array_key_exists($casterName, $this->globalHydrateCasters)) {
             return $this->globalHydrateCasters[$casterName]->typeAfterHydrate($castInfo);
         }
@@ -79,8 +81,10 @@ class CasterRegistry implements CasterRegistryInterface
         return $this->hydrateCasters[$casterName]->typeAfterHydrate($castInfo);
     }
 
-    public function getTypeBeforeExtract(string $casterName, CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
-    {
+    public function getTypeBeforeExtract(
+        string $casterName,
+        CastInfoInterface $castInfo
+    ): TypeDefinition|UnionTypeDefinition {
         if (array_key_exists($casterName, $this->globalExtractCasters)) {
             return $this->globalExtractCasters[$casterName]->typeBeforeExtract($castInfo);
         }
@@ -92,7 +96,7 @@ class CasterRegistry implements CasterRegistryInterface
         return $this->extractCasters[$casterName]->typeBeforeExtract($castInfo);
     }
 
-    public function extract(string $casterName, CastInfo $castInfo, mixed $value): mixed
+    public function extract(string $casterName, CastInfoInterface $castInfo, mixed $value): mixed
     {
         if (array_key_exists($casterName, $this->globalExtractCasters)) {
             return $this->globalExtractCasters[$casterName]->extract($castInfo, $value);
@@ -105,7 +109,7 @@ class CasterRegistry implements CasterRegistryInterface
         return $this->extractCasters[$casterName]->extract($castInfo, $value);
     }
 
-    public function hydrate(string $casterName, CastInfo $castInfo, mixed $value): mixed
+    public function hydrate(string $casterName, CastInfoInterface $castInfo, mixed $value): mixed
     {
         if (array_key_exists($casterName, $this->globalHydrateCasters)) {
             return $this->globalHydrateCasters[$casterName]->hydrate($castInfo, $value);
@@ -119,10 +123,10 @@ class CasterRegistry implements CasterRegistryInterface
     }
 
     /**
-     * @template T
+     * @template TCasterInterface
      * @param string $casterName
-     * @param class-string<T> $interface
-     * @return T
+     * @param class-string<TCasterInterface> $interface
+     * @return TCasterInterface
      */
     private function makeCaster(string $casterName, string $interface): object
     {

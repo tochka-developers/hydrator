@@ -3,9 +3,10 @@
 namespace Tochka\Hydrator\DTO;
 
 use JetBrains\PhpStorm\Pure;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 
 /**
- * @psalm-api
+ * @template TDefaultValue
  */
 class ParameterDefinition extends ValueDefinition
 {

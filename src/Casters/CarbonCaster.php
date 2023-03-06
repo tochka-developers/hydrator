@@ -7,30 +7,30 @@ use Tochka\Hydrator\Annotations\DateTimeFormat;
 use Tochka\Hydrator\Annotations\TimeZone;
 use Tochka\Hydrator\Contracts\ExtractCasterInterface;
 use Tochka\Hydrator\Contracts\HydrateCasterInterface;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
+use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\DTO\TypeDefinition;
 use Tochka\Hydrator\DTO\UnionTypeDefinition;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\Exceptions\WrongValueTypeCastException;
 
 class CarbonCaster implements ExtractCasterInterface, HydrateCasterInterface
 {
-    public function canHydrate(CastInfo $castInfo): bool
+    public function canHydrate(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    public function canExtract(CastInfo $castInfo): bool
+    public function canExtract(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    private function canCast(CastInfo $castInfo): bool
+    private function canCast(CastInfoInterface $castInfo): bool
     {
-        return class_exists('\\Carbon\\Carbon') && is_a($castInfo->getTypeDefinition()->getClassName(), Carbon::class, true);
+        return class_exists('\\Carbon\\Carbon') && is_a($castInfo->getClassName(), Carbon::class, true);
     }
 
-    public function hydrate(CastInfo $castInfo, mixed $value): ?string
+    public function hydrate(CastInfoInterface $castInfo, mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -50,7 +50,7 @@ class CarbonCaster implements ExtractCasterInterface, HydrateCasterInterface
         return $value->format($format);
     }
 
-    public function extract(CastInfo $castInfo, mixed $value): ?Carbon
+    public function extract(CastInfoInterface $castInfo, mixed $value): ?Carbon
     {
         if ($value === null) {
             return null;
@@ -74,13 +74,13 @@ class CarbonCaster implements ExtractCasterInterface, HydrateCasterInterface
         }
     }
 
-    public function typeBeforeExtract(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeBeforeExtract(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 
-    public function typeAfterHydrate(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeAfterHydrate(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 }

@@ -8,11 +8,13 @@ use Tochka\Hydrator\Annotations\HydrateByMethod;
 use Tochka\Hydrator\Contracts\CasterRegistryInterface;
 use Tochka\Hydrator\Contracts\ExtractCasterInterface;
 use Tochka\Hydrator\Contracts\HydrateCasterInterface;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\CallableTypeInterface;
 use Tochka\Hydrator\DTO\Caster;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoForClass;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoForType;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
 use Tochka\Hydrator\DTO\ClassDefinition;
-use Tochka\Hydrator\DTO\Collection;
 use Tochka\Hydrator\DTO\ParameterDefinition;
 use Tochka\Hydrator\DTO\PropertyDefinition;
 use Tochka\Hydrator\DTO\TypeDefinition;
@@ -27,29 +29,29 @@ class CasterParser
         $this->casterRegistry = $casterRegistry;
     }
 
-    public function setCasterForParameter(ParameterDefinition $parameterReference): void
+    public function setCasterForParameter(ParameterDefinition $parameterDefinition): void
     {
         /**
          * @psalm-ignore-var
          * @var Collection<CastBy> $attributes
          */
-        $attributes = $parameterReference->getAttributes()->type(CastBy::class);
-        $castInfo = new CastInfo(valueDefinition: $parameterReference);
+        $attributes = $parameterDefinition->getAttributes()->type(CastBy::class);
+        $castInfo = new CastInfoForType($parameterDefinition->getType(), $parameterDefinition->getAttributes());
         foreach ($attributes as $attribute) {
             if (
-                $parameterReference->getCaster()->getHydrateCaster() === null
+                $parameterDefinition->getCaster()->getHydrateCaster() === null
                 && is_a($attribute->casterClassName, HydrateCasterInterface::class, true)
             ) {
                 $castType = $this->casterRegistry->getTypeAfterHydrate($attribute->casterClassName, $castInfo);
-                $parameterReference->getCaster()->setHydrateCaster($attribute->casterClassName, $castType);
+                $parameterDefinition->getCaster()->setHydrateCaster($attribute->casterClassName, $castType);
             }
 
             if (
-                $parameterReference->getCaster()->getExtractCaster() === null
+                $parameterDefinition->getCaster()->getExtractCaster() === null
                 && is_a($attribute->casterClassName, ExtractCasterInterface::class, true)
             ) {
                 $castType = $this->casterRegistry->getTypeBeforeExtract($attribute->casterClassName, $castInfo);
-                $parameterReference->getCaster()->setExtractCaster($attribute->casterClassName, $castType);
+                $parameterDefinition->getCaster()->setExtractCaster($attribute->casterClassName, $castType);
             }
         }
     }
@@ -78,7 +80,7 @@ class CasterParser
     public function setGlobalCasterForType(CallableTypeInterface $type, ValueDefinition $valueDefinition): void
     {
         $type->call(function (TypeDefinition $type) use ($valueDefinition) {
-            $castInfo = new CastInfo(typeDefinition: $type, valueDefinition: $valueDefinition);
+            $castInfo = new CastInfoForType($type);
 
             if ($type->getCaster()->getHydrateCaster() === null) {
                 $globalHydrateCaster = $this->casterRegistry->getGlobalHydrateCaster($castInfo);
@@ -109,7 +111,7 @@ class CasterParser
                 $this->setSelfCaster(
                     $type->getClassName(),
                     $type->getCaster(),
-                    new CastInfo(typeDefinition: $type)
+                    new CastInfoForType($type),
                 );
             }
 
@@ -124,11 +126,11 @@ class CasterParser
         $this->setSelfCaster(
             $classDefinition->getClassName(),
             $classDefinition->getCaster(),
-            new CastInfo(classDefinition: $classDefinition)
+            new CastInfoForClass($classDefinition, $classDefinition->getAttributes()),
         );
     }
 
-    private function setSelfCaster(string $className, Caster $caster, CastInfo $castInfo): void
+    private function setSelfCaster(string $className, Caster $caster, CastInfoInterface $castInfo): void
     {
         if (
             $caster->getHydrateCaster() === null

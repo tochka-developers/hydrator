@@ -14,22 +14,25 @@ use Tochka\Hydrator\Casters\CarbonCaster;
 use Tochka\Hydrator\Casters\EnumCaster;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Contracts\CasterRegistryInterface;
-use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
-use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
 use Tochka\Hydrator\Contracts\DefinitionParserInterface;
+use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
+use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\TypeDefinitionFactoryInterface;
-use Tochka\Hydrator\Extractors\ArrayValueExtractor;
-use Tochka\Hydrator\Extractors\MixedValueExtractor;
-use Tochka\Hydrator\Extractors\ObjectValueExtractor;
-use Tochka\Hydrator\Extractors\StringValueExtractor;
-use Tochka\Hydrator\Extractors\StrongValueExtractor;
+use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionFactory;
+use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
+use Tochka\Hydrator\ExtendedReflection\TypeFactories\DocBlockTypeFactoryMiddleware;
+use Tochka\Hydrator\ExtendedReflection\TypeFactories\ReflectionTypeFactoryMiddleware;
+use Tochka\Hydrator\Extractors\ArrayExtractor;
+use Tochka\Hydrator\Extractors\MixedExtractor;
+use Tochka\Hydrator\Extractors\ObjectExtractor;
+use Tochka\Hydrator\Extractors\StringExtractor;
+use Tochka\Hydrator\Extractors\StrongExtractor;
 use Tochka\Hydrator\Support\AnnotationReader;
 use Tochka\Hydrator\Support\CasterRegistry;
-use Tochka\Hydrator\Support\ExtendedReflectionFactory;
 use Tochka\Hydrator\Support\TypeDefinitionFactory;
 
-class CodeParserServiceProvider extends ServiceProvider
+class HydratorServiceProvider extends ServiceProvider
 {
     private const IGNORED_ANNOTATIONS = [
         'apiGroupName',
@@ -63,6 +66,15 @@ class CodeParserServiceProvider extends ServiceProvider
                 )
             );
         });
+
+        $this->app->when(ExtendedTypeFactory::class)
+            ->needs('$typeFactoryMiddleware')
+            ->give(
+                [
+                    ReflectionTypeFactoryMiddleware::class,
+                    DocBlockTypeFactoryMiddleware::class
+                ]
+            );
 
         $this->app->singleton(
             ExtendedReflectionFactoryInterface::class,
@@ -99,11 +111,11 @@ class CodeParserServiceProvider extends ServiceProvider
         $this->app->singleton(ExtractorInterface::class, function (Container $container): Extractor {
             /** @var Extractor $extractor */
             $extractor = $container->make(Extractor::class);
-            $extractor->registerValueExtractor(new MixedValueExtractor());
-            $extractor->registerValueExtractor(new StringValueExtractor());
-            $extractor->registerValueExtractor(new StrongValueExtractor());
-            $extractor->registerValueExtractor(new ArrayValueExtractor());
-            $extractor->registerValueExtractor(new ObjectValueExtractor());
+            $extractor->registerValueExtractor(new MixedExtractor());
+            $extractor->registerValueExtractor(new StringExtractor());
+            $extractor->registerValueExtractor(new StrongExtractor());
+            $extractor->registerValueExtractor(new ArrayExtractor());
+            $extractor->registerValueExtractor(new ObjectExtractor());
 
             return $extractor;
         });

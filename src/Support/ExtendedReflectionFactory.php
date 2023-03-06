@@ -5,7 +5,7 @@ namespace Tochka\Hydrator\Support;
 use phpDocumentor\Reflection\DocBlockFactory as ReflectionDocBlock;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
-use Tochka\Hydrator\Exceptions\BaseHydratorException;
+use Tochka\Hydrator\Exceptions\InternalHydratorException;
 
 /**
  * @psalm-api
@@ -77,8 +77,7 @@ class ExtendedReflectionFactory implements ExtendedReflectionFactoryInterface
             );
         }
 
-        // TODO: exception
-        throw new BaseHydratorException();
+        throw new InternalHydratorException(sprintf('Unsupported reflector [%s]', get_class($reflector)));
     }
 
     public function makeForClass(string $className): ExtendedReflection
@@ -91,8 +90,7 @@ class ExtendedReflectionFactory implements ExtendedReflectionFactoryInterface
                 }
             );
         } catch (\ReflectionException $e) {
-            //TODO: exception
-            throw new BaseHydratorException(previous: $e);
+            throw new InternalHydratorException(sprintf('Error while make reflection for class [%s]', $className), $e);
         }
     }
 
@@ -106,8 +104,9 @@ class ExtendedReflectionFactory implements ExtendedReflectionFactoryInterface
                 }
             );
         } catch (\ReflectionException $e) {
-            //TODO: exception
-            throw new BaseHydratorException(previous: $e);
+            throw new InternalHydratorException(
+                sprintf('Error while make reflection for method [%s:%s]', $className, $methodName), $e
+            );
         }
     }
 
@@ -121,31 +120,38 @@ class ExtendedReflectionFactory implements ExtendedReflectionFactoryInterface
                 }
             );
         } catch (\ReflectionException $e) {
-            //TODO: exception
-            throw new BaseHydratorException(previous: $e);
+            throw new InternalHydratorException(
+                sprintf('Error while make reflection for property [%s:%s]', $className, $propertyName), $e
+            );
         }
     }
 
-     public function makeForParameter(string $className, string $methodName, string $parameterName): ExtendedReflection
-     {
-         try {
-             return $this->getOrMakeFromReflection(
-                 $this->getKeyForParameter($className, $methodName, $parameterName),
-                 function () use ($className, $methodName, $parameterName) {
-                     return new \ReflectionParameter([$className, $methodName], $parameterName);
-                 }
-             );
-         } catch (\ReflectionException $e) {
-             //TODO: exception
-             throw new BaseHydratorException(previous: $e);
-         }
-     }
+    public function makeForParameter(string $className, string $methodName, string $parameterName): ExtendedReflection
+    {
+        try {
+            return $this->getOrMakeFromReflection(
+                $this->getKeyForParameter($className, $methodName, $parameterName),
+                function () use ($className, $methodName, $parameterName) {
+                    return new \ReflectionParameter([$className, $methodName], $parameterName);
+                }
+            );
+        } catch (\ReflectionException $e) {
+            throw new InternalHydratorException(
+                sprintf(
+                    'Error while make reflection for parameter [%s:%s<%s>]',
+                    $className,
+                    $methodName,
+                    $parameterName
+                ), $e
+            );
+        }
+    }
 
     /**
-      * @param string $key
-      * @param callable(): \Reflector $reflectorCallable
-      * @return ExtendedReflection
-      */
+     * @param string $key
+     * @param callable(): \Reflector $reflectorCallable
+     * @return ExtendedReflection
+     */
     private function getOrMakeFromReflection(string $key, callable $reflectorCallable): ExtendedReflection
     {
         if (!array_key_exists($key, $this->docBlocks)) {

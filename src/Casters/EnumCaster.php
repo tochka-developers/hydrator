@@ -4,10 +4,10 @@ namespace Tochka\Hydrator\Casters;
 
 use Tochka\Hydrator\Contracts\ExtractCasterInterface;
 use Tochka\Hydrator\Contracts\HydrateCasterInterface;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
+use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\DTO\TypeDefinition;
 use Tochka\Hydrator\DTO\UnionTypeDefinition;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\Exceptions\UnexpectedValueCastException;
 use Tochka\Hydrator\Exceptions\WrongExpectedTypeCastException;
 use Tochka\Hydrator\Exceptions\WrongValueTypeCastException;
@@ -17,22 +17,22 @@ use Tochka\Hydrator\Exceptions\WrongValueTypeCastException;
  */
 class EnumCaster implements ExtractCasterInterface, HydrateCasterInterface
 {
-    public function canHydrate(CastInfo $castInfo): bool
+    public function canHydrate(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    public function canExtract(CastInfo $castInfo): bool
+    public function canExtract(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    private function canCast(CastInfo $castInfo): bool
+    private function canCast(CastInfoInterface $castInfo): bool
     {
-        return function_exists('enum_exists') && enum_exists($castInfo->getTypeDefinition()->getClassName());
+        return function_exists('enum_exists') && enum_exists($castInfo->getClassName());
     }
 
-    public function extract(CastInfo $castInfo, mixed $value): mixed
+    public function extract(CastInfoInterface $castInfo, mixed $value): mixed
     {
         if ($value === null) {
             return null;
@@ -43,7 +43,7 @@ class EnumCaster implements ExtractCasterInterface, HydrateCasterInterface
         }
 
         /** @var class-string<\BackedEnum>|null $expectedType */
-        $expectedType = $castInfo->getTypeDefinition()->getClassName();
+        $expectedType = $castInfo->getClassName();
         if ($expectedType === null || !enum_exists($expectedType)) {
             throw new WrongExpectedTypeCastException($expectedType, 'enum');
         }
@@ -55,7 +55,7 @@ class EnumCaster implements ExtractCasterInterface, HydrateCasterInterface
         }
     }
 
-    public function hydrate(CastInfo $castInfo, mixed $value): mixed
+    public function hydrate(CastInfoInterface $castInfo, mixed $value): mixed
     {
         if ($value === null) {
             return null;
@@ -68,13 +68,13 @@ class EnumCaster implements ExtractCasterInterface, HydrateCasterInterface
         return $value->value;
     }
 
-    public function typeAfterHydrate(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeAfterHydrate(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 
-    public function typeBeforeExtract(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeBeforeExtract(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 }

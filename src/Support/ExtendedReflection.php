@@ -9,7 +9,7 @@ use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
-use Tochka\Hydrator\DTO\Collection;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 
 class ExtendedReflection
 {

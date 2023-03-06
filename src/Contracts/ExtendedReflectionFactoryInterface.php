@@ -2,40 +2,41 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Tochka\Hydrator\Support\ExtendedReflection;
+use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedClassReflection;
+use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedMethodReflection;
+use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedParameterReflection;
+use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedPropertyReflection;
 
 /**
  * @psalm-api
  */
 interface ExtendedReflectionFactoryInterface
 {
-    public function make(\Reflector $reflector): ExtendedReflection;
+    /**
+     * @param class-string $className
+     * @throws \ReflectionException
+     */
+    public function makeForClass(string $className): ExtendedClassReflection;
 
     /**
      * @param class-string $className
-     * @return ExtendedReflection
+     * @throws \ReflectionException
      */
-    public function makeForClass(string $className): ExtendedReflection;
+    public function makeForMethod(string $className, string $methodName): ExtendedMethodReflection;
 
     /**
      * @param class-string $className
-     * @param string $methodName
-     * @return ExtendedReflection
+     * @throws \ReflectionException
      */
-    public function makeForMethod(string $className, string $methodName): ExtendedReflection;
+    public function makeForProperty(string $className, string $propertyName): ExtendedPropertyReflection;
 
     /**
      * @param class-string $className
-     * @param string $propertyName
-     * @return ExtendedReflection
+     * @throws \ReflectionException
      */
-    public function makeForProperty(string $className, string $propertyName): ExtendedReflection;
-
-    /**
-     * @param class-string $className
-     * @param string $methodName
-     * @param string $parameterName
-     * @return ExtendedReflection
-     */
-    public function makeForParameter(string $className, string $methodName, string $parameterName): ExtendedReflection;
+    public function makeForParameter(
+        string $className,
+        string $methodName,
+        string $parameterName
+    ): ExtendedParameterReflection;
 }

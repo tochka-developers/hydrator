@@ -6,31 +6,31 @@ use BenSampo\Enum\Enum;
 use BenSampo\Enum\Exceptions\InvalidEnumMemberException;
 use Tochka\Hydrator\Contracts\ExtractCasterInterface;
 use Tochka\Hydrator\Contracts\HydrateCasterInterface;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
+use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\DTO\TypeDefinition;
 use Tochka\Hydrator\DTO\UnionTypeDefinition;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
 use Tochka\Hydrator\Exceptions\UnexpectedValueCastException;
 use Tochka\Hydrator\Exceptions\WrongExpectedTypeCastException;
 
 class BenSampoEnumCaster implements ExtractCasterInterface, HydrateCasterInterface
 {
-    public function canHydrate(CastInfo $castInfo): bool
+    public function canHydrate(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    public function canExtract(CastInfo $castInfo): bool
+    public function canExtract(CastInfoInterface $castInfo): bool
     {
         return $this->canCast($castInfo);
     }
 
-    private function canCast(CastInfo $castInfo): bool
+    private function canCast(CastInfoInterface $castInfo): bool
     {
-        return class_exists('\\BenSampo\\Enum\\Enum') && is_a($castInfo->getTypeDefinition()->getClassName(), Enum::class, true);
+        return class_exists('\\BenSampo\\Enum\\Enum') && is_a($castInfo->getClassName(), Enum::class, true);
     }
 
-    public function hydrate(CastInfo $castInfo, mixed $value): ?string
+    public function hydrate(CastInfoInterface $castInfo, mixed $value): mixed
     {
         if ($value === null) {
             return null;
@@ -43,14 +43,14 @@ class BenSampoEnumCaster implements ExtractCasterInterface, HydrateCasterInterfa
         return $value->value;
     }
 
-    public function extract(CastInfo $castInfo, mixed $value): ?Enum
+    public function extract(CastInfoInterface $castInfo, mixed $value): ?Enum
     {
         if ($value === null) {
             return null;
         }
 
         /** @var class-string<Enum>|null $expectedType */
-        $expectedType = $castInfo->getTypeDefinition()->getClassName();
+        $expectedType = $castInfo->getClassName();
         if ($expectedType === null || !is_a($expectedType, Enum::class, true)) {
             throw new WrongExpectedTypeCastException($expectedType, Enum::class);
         }
@@ -62,13 +62,13 @@ class BenSampoEnumCaster implements ExtractCasterInterface, HydrateCasterInterfa
         }
     }
 
-    public function typeBeforeExtract(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeBeforeExtract(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 
-    public function typeAfterHydrate(CastInfo $castInfo): TypeDefinition|UnionTypeDefinition
+    public function typeAfterHydrate(CastInfoInterface $castInfo): TypeDefinition|UnionTypeDefinition
     {
-        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING());
+        return new TypeDefinition(ScalarTypeEnum::TYPE_STRING);
     }
 }

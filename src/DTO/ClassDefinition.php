@@ -3,6 +3,7 @@
 namespace Tochka\Hydrator\DTO;
 
 use JetBrains\PhpStorm\Pure;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 
 class ClassDefinition
 {

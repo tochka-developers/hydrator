@@ -4,7 +4,7 @@ namespace Tochka\Hydrator\Tests;
 
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Orchestra\Testbench\TestCase;
-use Tochka\Hydrator\CodeParserServiceProvider;
+use Tochka\Hydrator\HydratorServiceProvider;
 
 abstract class DefaultTestCase extends TestCase
 {
@@ -12,6 +12,6 @@ abstract class DefaultTestCase extends TestCase
 
     protected function getPackageProviders($app): array
     {
-        return [CodeParserServiceProvider::class];
+        return [HydratorServiceProvider::class];
     }
 }

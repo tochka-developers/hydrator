@@ -36,8 +36,8 @@ class TypeResolver implements TypeResolverInterface
             $actualScalarType = ScalarTypeEnum::fromVarType($valueToResolve);
 
             foreach ($typeDefinition->getTypes() as $type) {
-                if ($type->getScalarType()->isNot(ScalarTypeEnum::TYPE_OBJECT())) {
-                    if ($actualScalarType->is($type->getScalarType())) {
+                if ($type->getScalarType() !== ScalarTypeEnum::TYPE_OBJECT) {
+                    if ($actualScalarType === $type->getScalarType()) {
                         return $type;
                     }
                 } elseif ($type->getClassName() !== null && is_object($valueToResolve)) {
@@ -52,7 +52,7 @@ class TypeResolver implements TypeResolverInterface
                 }
             }
         } elseif (
-            $typeDefinition->getScalarType()->is(ScalarTypeEnum::TYPE_OBJECT())
+            $typeDefinition->getScalarType() === ScalarTypeEnum::TYPE_OBJECT
             && $typeDefinition->getClassName() !== null
             && is_object($valueToResolve)
             && array_key_exists($typeDefinition->getClassName(), $this->interfaceMatchers)

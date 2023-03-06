@@ -3,9 +3,12 @@
 namespace Tochka\Hydrator;
 
 use Tochka\Hydrator\Contracts\DefinitionParserInterface;
+use Tochka\Hydrator\Contracts\HydratorInterface;
+use Tochka\Hydrator\DTO\ParameterDefinition;
+use Tochka\Hydrator\DTO\PropertyDefinition;
 use Tochka\Hydrator\DTO\ValueDefinition;
 
-class Hydrator
+class Hydrator implements HydratorInterface
 {
     private DefinitionParserInterface $parametersParser;
 
@@ -22,11 +25,26 @@ class Hydrator
         }
     }
 
-    public function hydrateObject(object $objectForHydrate): object
+    public function hydrateObject(object $objectToHydrate, string $className): object
     {
+        // TODO: Implement hydrateObject() method.
     }
 
-    public function hydrateValue(mixed $valueForHydrate, ValueDefinition $valueReference): mixed
+    public function hydrateProperty(
+        mixed $propertyToHydrate,
+        PropertyDefinition $propertyDefinition,
+        object $hydratedObject
+    ): mixed {
+        // TODO: Implement hydrateProperty() method.
+    }
+
+    public function hydrateParameter(mixed $parameterToHydrate, ParameterDefinition $parameterDefinition): mixed
     {
+        // TODO: Implement hydrateParameter() method.
+    }
+
+    public function hydrateValue(mixed $valueToHydrate, ValueDefinition $valueDefinition): mixed
+    {
+        // TODO: Implement hydrateValue() method.
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoInterface;
 use Tochka\Hydrator\DTO\TypeDefinition;
 use Tochka\Hydrator\DTO\UnionTypeDefinition;
 
@@ -13,36 +13,42 @@ interface CasterRegistryInterface
     /**
      * @return class-string|null
      */
-    public function getGlobalHydrateCaster(CastInfo $castInfo): ?string;
+    public function getGlobalHydrateCaster(CastInfoInterface $castInfo): ?string;
 
     /**
      * @return class-string|null
      */
-    public function getGlobalExtractCaster(CastInfo $castInfo): ?string;
+    public function getGlobalExtractCaster(CastInfoInterface $castInfo): ?string;
 
     /**
      * @param class-string $casterName
      */
-    public function getTypeAfterHydrate(string $casterName, CastInfo $castInfo): TypeDefinition|UnionTypeDefinition;
+    public function getTypeAfterHydrate(
+        string $casterName,
+        CastInfoInterface $castInfo
+    ): TypeDefinition|UnionTypeDefinition;
 
     /**
      * @param class-string $casterName
      */
-    public function getTypeBeforeExtract(string $casterName, CastInfo $castInfo): TypeDefinition|UnionTypeDefinition;
+    public function getTypeBeforeExtract(
+        string $casterName,
+        CastInfoInterface $castInfo
+    ): TypeDefinition|UnionTypeDefinition;
 
     /**
      * @param class-string $casterName
-     * @param CastInfo $castInfo
+     * @param CastInfoInterface $castInfo
      * @param mixed $value
      * @return mixed
      */
-    public function extract(string $casterName, CastInfo $castInfo, mixed $value): mixed;
+    public function extract(string $casterName, CastInfoInterface $castInfo, mixed $value): mixed;
 
     /**
      * @param class-string $casterName
-     * @param CastInfo $castInfo
+     * @param CastInfoInterface $castInfo
      * @param mixed $value
      * @return mixed
      */
-    public function hydrate(string $casterName, CastInfo $castInfo, mixed $value): mixed;
+    public function hydrate(string $casterName, CastInfoInterface $castInfo, mixed $value): mixed;
 }

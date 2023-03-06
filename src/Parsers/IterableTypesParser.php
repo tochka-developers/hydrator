@@ -32,10 +32,10 @@ class IterableTypesParser
 
     private function parseParameterType(TypeDefinition $type, ?Type $docBlockType): void
     {
-        if ($type->getScalarType()->is(ScalarTypeEnum::TYPE_ARRAY())) {
+        if ($type->getScalarType() === ScalarTypeEnum::TYPE_ARRAY) {
             $valueType = $this->getValueTypeForArray($docBlockType);
             $type->setValueType($this->parameterTypeFactory->getFromDocBlock($valueType));
-        } elseif ($type->getScalarType()->is(ScalarTypeEnum::TYPE_OBJECT())) {
+        } elseif ($type->getScalarType() === ScalarTypeEnum::TYPE_OBJECT) {
             if ($type->getClassName() === null) {
                 return;
             }

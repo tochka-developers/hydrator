@@ -5,11 +5,13 @@ namespace Tochka\Hydrator;
 use Illuminate\Container\Container;
 use Illuminate\Pipeline\Pipeline;
 use Tochka\Hydrator\Contracts\CasterRegistryInterface;
-use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\DefinitionParserInterface;
+use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\TypeResolverInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\DTO\CastInfo;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoForClass;
+use Tochka\Hydrator\DTO\CastInfo\CastInfoForType;
+use Tochka\Hydrator\DTO\Context;
 use Tochka\Hydrator\DTO\ExtractContainer;
 use Tochka\Hydrator\DTO\ParameterDefinition;
 use Tochka\Hydrator\DTO\PropertyDefinition;
@@ -44,13 +46,20 @@ class Extractor implements ExtractorInterface
         $this->valueExtractors[] = $valueExtractor;
     }
 
-    public function extractMethodParameters(object $parametersToExtract, string $className, string $methodName): array
-    {
+    public function extractMethodParameters(
+        object $parametersToExtract,
+        string $className,
+        string $methodName,
+        ?Context $previousContext = null
+    ): array {
         $parameterDefinitions = $this->definitionParser->getMethodParameters($className, $methodName);
 
+        /** @var array<string, mixed> $extractedParameters */
         $extractedParameters = [];
 
         foreach ($parameterDefinitions as $parameterDefinition) {
+
+
             try {
                 $parameterName = $parameterDefinition->getName();
 
@@ -67,9 +76,12 @@ class Extractor implements ExtractorInterface
 
                 $extractedParameters[$parameterName] = $this->extractParameter(
                     $parametersToExtract->$parameterName,
-                    $parameterDefinition
+                    $parameterDefinition,
+                    $previousContext
                 );
             } catch (ExtractException $e) {
+                $context = new Context($parameterDefinition->getName(), $previousContext);
+
             }
         }
 
@@ -77,21 +89,24 @@ class Extractor implements ExtractorInterface
     }
 
     /**
-     * @template T
+     * @template TExtractedObject
      * @param object $objectToExtract
-     * @param class-string<T> $className
-     * @return T
+     * @param class-string $className
+     * @param Context|null $previousContext
+     * @return TExtractedObject
      * @throws \ReflectionException
      */
-    public function extractObject(object $objectToExtract, string $className): object
+    public function extractObject(object $objectToExtract, string $className, ?Context $previousContext = null): object
     {
-        $objectReference = $this->definitionParser->getClassDefinition($className);
+        $context = Context::forClass($className, $previousContext);
 
-        if ($objectReference->getCaster()->getExtractCaster() !== null) {
-            $castInfo = new CastInfo(classDefinition: $objectReference);
-            /** @var T */
+        $classDefinition = $this->definitionParser->getClassDefinition($className);
+
+        if ($classDefinition->getCaster()->getExtractCaster() !== null) {
+            $castInfo = new CastInfoForClass($classDefinition);
+            /** @var TExtractedObject */
             return $this->casterRegistry->extract(
-                $objectReference->getCaster()->getExtractCaster(),
+                $classDefinition->getCaster()->getExtractCaster(),
                 $castInfo,
                 $objectToExtract
             );
@@ -100,7 +115,7 @@ class Extractor implements ExtractorInterface
         $reflectionClass = new \ReflectionClass($className);
         $extractedObject = $reflectionClass->newInstanceWithoutConstructor();
 
-        foreach ($objectReference->getProperties() as $propertyReference) {
+        foreach ($classDefinition->getProperties() as $propertyReference) {
             $propertyName = $propertyReference->getName();
 
             if (!property_exists($objectToExtract, $propertyName)) {
@@ -126,17 +141,20 @@ class Extractor implements ExtractorInterface
 
     public function extractProperty(
         mixed $propertyToExtract,
-        PropertyDefinition $propertyReference,
-        object $extractedObject
+        PropertyDefinition $propertyDefinition,
+        object $extractedObject,
+        ?Context $previousContext = null
     ): mixed {
-        if ($propertyToExtract === null && !$propertyReference->getType()->isNullable()) {
+        $context = Context::forProperty($propertyDefinition->getClassName(), $propertyDefinition->getName(), $previousContext);
+
+        if ($propertyToExtract === null && !$propertyDefinition->getType()->isNullable()) {
             // TODO: exception
             throw new \RuntimeException();
         }
 
-        $castInfo = new CastInfo(valueDefinition: $propertyReference);
+        $castInfo = new CastInfoForType($propertyDefinition->getType(), $propertyDefinition->getAttributes());
 
-        $extractByMethod = $propertyReference->getExtractByMethod();
+        $extractByMethod = $propertyDefinition->getExtractByMethod();
         if ($extractByMethod !== null) {
             if (method_exists($extractedObject, $extractByMethod)) {
                 return $extractedObject->$extractByMethod($castInfo, $propertyToExtract);
@@ -146,18 +164,25 @@ class Extractor implements ExtractorInterface
             }
         }
 
-        return $this->extractParameter($propertyToExtract, $propertyReference);
+        return $this->extractParameter($propertyToExtract, $propertyDefinition);
     }
 
-    public function extractParameter(mixed $parameterToExtract, ParameterDefinition $parameterDefinition): mixed
+    public function extractParameter(mixed $parameterToExtract, ParameterDefinition $parameterDefinition, ?Context $previousContext = null): mixed
     {
+        $context = Context::forParameter(
+            $parameterDefinition->getClassName(),
+            $parameterDefinition->getMethodName(),
+            $parameterDefinition->getName(),
+            $previousContext
+        );
+
         if ($parameterToExtract === null && !$parameterDefinition->getType()->isNullable()) {
             // TODO: exception
             throw new \RuntimeException();
         }
 
         if ($parameterDefinition->getCaster()->getExtractCaster() !== null) {
-            $castInfo = new CastInfo(valueDefinition: $parameterDefinition);
+            $castInfo = new CastInfoForType($parameterDefinition->getType(), $parameterDefinition->getAttributes());
 
             return $this->casterRegistry->extract(
                 $parameterDefinition->getCaster()->getExtractCaster(),
@@ -169,7 +194,7 @@ class Extractor implements ExtractorInterface
         return $this->extractValue($parameterToExtract, $parameterDefinition);
     }
 
-    public function extractValue(mixed $valueToExtract, ValueDefinition $valueDefinition): mixed
+    public function extractValue(mixed $valueToExtract, ValueDefinition $valueDefinition, ?Context $previousContext = null): mixed
     {
         if ($valueToExtract === null && !$valueDefinition->getType()->isNullable()) {
             // TODO: exception
