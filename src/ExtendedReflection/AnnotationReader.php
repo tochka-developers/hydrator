@@ -1,6 +1,6 @@
 <?php
 
-namespace Tochka\Hydrator\Support;
+namespace Tochka\Hydrator\ExtendedReflection;
 
 use Spiral\Attributes\ReaderInterface;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;

@@ -2,7 +2,7 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Tochka\Hydrator\DTO\ClassDefinition;
+use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 
 interface ClassDefinitionsRegistryInterface
 {
@@ -10,13 +10,11 @@ interface ClassDefinitionsRegistryInterface
 
     /**
      * @param class-string $className
-     * @return ClassDefinition|null
      */
     public function get(string $className): ?ClassDefinition;
 
     /**
      * @param class-string $className
-     * @return bool
      */
     public function has(string $className): bool;
 

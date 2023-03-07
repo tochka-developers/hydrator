@@ -9,12 +9,12 @@ use phpDocumentor\Reflection\DocBlock\Tags\Param;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Definitions\DTO\Collection;
-use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionWithTypeInterface;
+use Tochka\Hydrator\ExtendedReflection\ExtendedValueReflectionInterface;
 use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
 use Tochka\Hydrator\ExtendedReflection\Traits\DocBlockOperationsTrait;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 
-class ExtendedParameterReflection implements ExtendedReflectionWithTypeInterface
+class ExtendedParameterReflection implements ExtendedValueReflectionInterface
 {
     use DocBlockOperationsTrait;
 
@@ -65,7 +65,9 @@ class ExtendedParameterReflection implements ExtendedReflectionWithTypeInterface
             ->filter(fn (Param $param) => $param->getName() === $this->getName())
             ->first();
 
-        return $paramTag->getDescription()?->getBodyTemplate() ?? null;
+        $description = $paramTag?->getDescription()?->getBodyTemplate();
+
+        return !empty($description) ? $description : null;
     }
 
     public function getType(): TypeInterface

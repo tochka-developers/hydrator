@@ -10,7 +10,7 @@ class MethodDefinition implements DefinitionInterface
     /** @var class-string */
     private string $className;
     private string $methodName;
-    /** @var Collection<PropertyDefinition> */
+    /** @var Collection<ValueDefinition> */
     private Collection $parameters;
     private ReturnDefinition $returnDefinition;
     /** @var Collection<object> */
@@ -24,10 +24,10 @@ class MethodDefinition implements DefinitionInterface
     {
         $this->className = $className;
         $this->methodName = $methodName;
-        /** @var array<PropertyDefinition> $parameters */
+        /** @var array<ValueDefinition> $parameters */
         $parameters = [];
-        $this->parameters = new Collection(...$parameters);
-        $this->attributes = new Collection();
+        $this->parameters = new Collection($parameters);
+        $this->attributes = new Collection([]);
         $this->returnDefinition = new ReturnDefinition(new MixedType());
     }
 
@@ -48,7 +48,7 @@ class MethodDefinition implements DefinitionInterface
 
     /**
      * @psalm-mutation-free
-     * @return Collection<PropertyDefinition>
+     * @return Collection<ValueDefinition>
      */
     #[Pure]
     public function getParameters(): Collection
@@ -57,7 +57,7 @@ class MethodDefinition implements DefinitionInterface
     }
 
     /**
-     * @param Collection<PropertyDefinition> $parameters
+     * @param Collection<ValueDefinition> $parameters
      */
     public function setParameters(Collection $parameters): void
     {

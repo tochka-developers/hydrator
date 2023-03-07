@@ -3,6 +3,7 @@
 namespace Tochka\Hydrator\ExtendedReflection\TypeFactories;
 
 use phpDocumentor\Reflection\DocBlock\Tags\Param;
+use phpDocumentor\Reflection\DocBlock\Tags\Return_;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 use phpDocumentor\Reflection\PseudoTypes\CallableString;
 use phpDocumentor\Reflection\PseudoTypes\False_;
@@ -39,7 +40,8 @@ use phpDocumentor\Reflection\Types\Self_;
 use phpDocumentor\Reflection\Types\Static_;
 use phpDocumentor\Reflection\Types\String_;
 use phpDocumentor\Reflection\Types\Void_;
-use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionWithTypeInterface;
+use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionInterface;
+use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedMethodReflection;
 use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedParameterReflection;
 use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedPropertyReflection;
 use Tochka\Hydrator\ExtendedReflection\Traits\DocBlockOperationsTrait;
@@ -81,7 +83,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
 
     public function handle(
         TypeInterface $defaultType,
-        ExtendedReflectionWithTypeInterface $reflector,
+        ExtendedReflectionInterface $reflector,
         callable $next
     ): TypeInterface {
         $type = $this->getDocBlockType($reflector);
@@ -116,7 +118,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
         return $next($this->clarifyType($defaultType, $type, $reflector), $reflector);
     }
 
-    private function getDocBlockType(ExtendedReflectionWithTypeInterface $reflector): ?Type
+    private function getDocBlockType(ExtendedReflectionInterface $reflector): ?Type
     {
         if ($reflector instanceof ExtendedParameterReflection) {
             /**
@@ -139,13 +141,21 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
             return $propertyTag?->getType();
         }
 
+        if ($reflector instanceof ExtendedMethodReflection) {
+            $returnTag = $this->getTagsFromDocBlock($reflector->getDocBlock())
+                ->type(Return_::class)
+                ->first();
+
+            return $returnTag?->getType();
+        }
+
         return null;
     }
 
     private function clarifyType(
         TypeInterface $defaultType,
         Type $type,
-        ExtendedReflectionWithTypeInterface $reflector
+        ExtendedReflectionInterface $reflector
     ): TypeInterface {
         if ($type instanceof Compound) {
             // if default type is not mixed, and doc block contains aggregate type - this is conflict, return default type
@@ -213,7 +223,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
     private function getMultipleTypes(
         TypeInterface $defaultType,
         Compound|Intersection $type,
-        ExtendedReflectionWithTypeInterface $reflector
+        ExtendedReflectionInterface $reflector
     ): array {
         $types = [];
         foreach ($type->getIterator() as $subType) {
@@ -223,7 +233,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
         return $types;
     }
 
-    private function clarifyArrayType(AbstractList $type, ExtendedReflectionWithTypeInterface $reflector): TypeInterface
+    private function clarifyArrayType(AbstractList $type, ExtendedReflectionInterface $reflector): TypeInterface
     {
         return new ArrayType(
             $this->clarifyType(new ArrayKeyType(), $type->getKeyType(), $reflector),
@@ -271,7 +281,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
 
     private function clarifyObjectType(
         Object_|Self_|Static_ $type,
-        ExtendedReflectionWithTypeInterface $reflector
+        ExtendedReflectionInterface $reflector
     ): TypeInterface {
         if ($type instanceof Self_ || $type instanceof Static_) {
             if ($reflector instanceof ExtendedParameterReflection) {

@@ -37,19 +37,12 @@ trait DocBlockOperationsTrait
             return null;
         }
 
+        $summary = $docBlock->getSummary();
         $description = $docBlock->getDescription()->getBodyTemplate();
 
-        if (!empty($description)) {
-            return $description;
-        }
+        $resultDescription = implode(PHP_EOL . PHP_EOL, array_filter([$summary, $description]));
 
-        $summary = $docBlock->getSummary();
-
-        if (!empty($summary)) {
-            return $summary;
-        }
-
-        return null;
+        return !empty($resultDescription) ? $resultDescription : null;
     }
 
     private function getTagsFromDocBlock(?DocBlock $docBlock): Collection

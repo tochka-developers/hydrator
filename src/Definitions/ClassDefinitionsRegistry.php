@@ -1,9 +1,9 @@
 <?php
 
-namespace Tochka\Hydrator;
+namespace Tochka\Hydrator\Definitions;
 
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
-use Tochka\Hydrator\DTO\ClassDefinition;
+use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 
 class ClassDefinitionsRegistry implements ClassDefinitionsRegistryInterface
 {

@@ -10,13 +10,13 @@ use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\ExtendedReflection\Enums\PropertyModifierEnum;
-use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionWithTypeInterface;
 use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
+use Tochka\Hydrator\ExtendedReflection\ExtendedValueReflectionInterface;
 use Tochka\Hydrator\ExtendedReflection\Traits\DocBlockOperationsTrait;
 use Tochka\Hydrator\ExtendedReflection\Traits\ModifiersTrait;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 
-class ExtendedPropertyReflection implements ExtendedReflectionWithTypeInterface
+class ExtendedPropertyReflection implements ExtendedValueReflectionInterface
 {
     use DocBlockOperationsTrait;
     use ModifiersTrait;
@@ -99,7 +99,25 @@ class ExtendedPropertyReflection implements ExtendedReflectionWithTypeInterface
 
     public function getDescription(): ?string
     {
-        return $this->getDescriptionFromDocBlock($this->docBlock);
+        // заберем описание из самого docBlock
+        $description = $this->getDescriptionFromDocBlock($this->docBlock);
+
+        if ($description !== null) {
+            return $description;
+        }
+
+        // если нет - попробуем найти описание в теге @var
+        /**
+         * @psalm-ignore-var
+         * @var Var_|null $varTag
+         */
+        $varTag = $this->getTagsFromDocBlock($this->docBlock)
+            ->type(Var_::class)
+            ->first();
+
+        $description = $varTag?->getDescription()?->getBodyTemplate();
+
+        return !empty($description) ? $description : null;
     }
 
     public function hasModifier(

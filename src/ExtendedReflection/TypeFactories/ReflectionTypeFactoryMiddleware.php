@@ -2,7 +2,7 @@
 
 namespace Tochka\Hydrator\ExtendedReflection\TypeFactories;
 
-use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionWithTypeInterface;
+use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionInterface;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 use Tochka\Hydrator\TypeSystem\Types\ArrayType;
 use Tochka\Hydrator\TypeSystem\Types\BoolType;
@@ -26,16 +26,20 @@ class ReflectionTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
 {
     public function handle(
         TypeInterface $defaultType,
-        ExtendedReflectionWithTypeInterface $reflector,
+        ExtendedReflectionInterface $reflector,
         callable $next
     ): TypeInterface {
         $originalReflector = $reflector->getReflection();
 
         if (!$originalReflector instanceof \ReflectionParameter && !$originalReflector instanceof \ReflectionProperty) {
-            return $next($defaultType, $reflector);
+            if (!$originalReflector instanceof \ReflectionMethod) {
+                return $next($defaultType, $reflector);
+            }
+            $reflectionType = $originalReflector->getReturnType();
+        } else {
+            $reflectionType = $originalReflector->getType();
         }
 
-        $reflectionType = $originalReflector->getType();
         if ($reflectionType === null) {
             return $next($defaultType, $reflector);
         }

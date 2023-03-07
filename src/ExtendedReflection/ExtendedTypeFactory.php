@@ -26,7 +26,7 @@ final class ExtendedTypeFactory
         $this->container = $container;
     }
 
-    public function getType(ExtendedReflectionWithTypeInterface $reflector): TypeInterface
+    public function getType(ExtendedReflectionInterface $reflector): TypeInterface
     {
         return $this->handle($this->typeFactoryMiddleware, new MixedType(), $reflector);
     }
@@ -37,7 +37,7 @@ final class ExtendedTypeFactory
     private function handle(
         array $middlewareList,
         TypeInterface $defaultType,
-        ExtendedReflectionWithTypeInterface $reflector
+        ExtendedReflectionInterface $reflector
     ): TypeInterface {
         $currentMiddleware = array_shift($middlewareList);
 
@@ -48,7 +48,7 @@ final class ExtendedTypeFactory
                 $reflector,
                 function (
                     TypeInterface $defaultType,
-                    ExtendedReflectionWithTypeInterface $reflector
+                    ExtendedReflectionInterface $reflector
                 ) use ($middlewareList): TypeInterface {
                     return $this->handle($middlewareList, $defaultType, $reflector);
                 }

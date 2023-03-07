@@ -14,11 +14,15 @@ use Tochka\Hydrator\Casters\CarbonCaster;
 use Tochka\Hydrator\Casters\EnumCaster;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Contracts\CasterRegistryInterface;
+use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
-use Tochka\Hydrator\Contracts\DefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
-use Tochka\Hydrator\Contracts\TypeDefinitionFactoryInterface;
+use Tochka\Hydrator\Contracts\MethodDefinitionParserInterface;
+use Tochka\Hydrator\Definitions\ClassDefinitionParser;
+use Tochka\Hydrator\Definitions\ClassDefinitionsRegistry;
+use Tochka\Hydrator\Definitions\MethodDefinitionParser;
+use Tochka\Hydrator\ExtendedReflection\AnnotationReader;
 use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionFactory;
 use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
 use Tochka\Hydrator\ExtendedReflection\TypeFactories\DocBlockTypeFactoryMiddleware;
@@ -28,9 +32,7 @@ use Tochka\Hydrator\Extractors\MixedExtractor;
 use Tochka\Hydrator\Extractors\ObjectExtractor;
 use Tochka\Hydrator\Extractors\StringExtractor;
 use Tochka\Hydrator\Extractors\StrongExtractor;
-use Tochka\Hydrator\Support\AnnotationReader;
 use Tochka\Hydrator\Support\CasterRegistry;
-use Tochka\Hydrator\Support\TypeDefinitionFactory;
 
 class HydratorServiceProvider extends ServiceProvider
 {
@@ -55,7 +57,6 @@ class HydratorServiceProvider extends ServiceProvider
     {
         $this->registerIgnoredAnnotations();
 
-        $this->app->singleton(TypeDefinitionFactoryInterface::class, TypeDefinitionFactory::class);
         $this->app->singleton(AnnotationReaderInterface::class, function (): AnnotationReaderInterface {
             return new AnnotationReader(
                 new MergeReader(
@@ -107,7 +108,9 @@ class HydratorServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(ClassDefinitionsRegistryInterface::class, ClassDefinitionsRegistry::class);
-        $this->app->singleton(DefinitionParserInterface::class, DefinitionParser::class);
+        $this->app->singleton(ClassDefinitionParserInterface::class, ClassDefinitionParser::class);
+        $this->app->singleton(MethodDefinitionParserInterface::class, MethodDefinitionParser::class);
+
         $this->app->singleton(ExtractorInterface::class, function (Container $container): Extractor {
             /** @var Extractor $extractor */
             $extractor = $container->make(Extractor::class);

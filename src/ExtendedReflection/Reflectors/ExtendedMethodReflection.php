@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tochka\Hydrator\ExtendedReflection\Reflectors;
 
 use phpDocumentor\Reflection\DocBlock;
+use phpDocumentor\Reflection\DocBlock\Tags\Return_;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Definitions\DTO\Collection;
@@ -13,6 +14,7 @@ use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionInterface;
 use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
 use Tochka\Hydrator\ExtendedReflection\Traits\DocBlockOperationsTrait;
 use Tochka\Hydrator\ExtendedReflection\Traits\ModifiersTrait;
+use Tochka\Hydrator\TypeSystem\TypeInterface;
 
 class ExtendedMethodReflection implements ExtendedReflectionInterface
 {
@@ -74,6 +76,26 @@ class ExtendedMethodReflection implements ExtendedReflectionInterface
                 $this->reflection->getParameters()
             )
         );
+    }
+
+    public function getReturnType(): TypeInterface
+    {
+        return $this->extendedTypeFactory->getType($this);
+    }
+
+    public function getReturnDescription(): ?string
+    {
+        /**
+         * @psalm-ignore-var
+         * @var Return_|null $returnTag
+         */
+        $returnTag = $this->getTagsFromDocBlock($this->getDocBlock())
+            ->type(Return_::class)
+            ->first();
+
+        $description = $returnTag?->getDescription()?->getBodyTemplate();
+
+        return !empty($description) ? $description : null;
     }
 
     public function hasModifier(MethodModifierEnum $methodModifier, MethodModifierEnum ...$methodModifiers): bool

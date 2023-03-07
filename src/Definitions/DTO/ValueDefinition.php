@@ -5,7 +5,7 @@ namespace Tochka\Hydrator\Definitions\DTO;
 use JetBrains\PhpStorm\Pure;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 
-class PropertyDefinition
+class ValueDefinition
 {
     private string $name;
     private TypeInterface $type;

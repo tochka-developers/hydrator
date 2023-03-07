@@ -8,12 +8,15 @@ class ClassDefinition implements DefinitionInterface
 {
     /** @var class-string */
     private string $className;
-    /** @var Collection<PropertyDefinition> */
+    /** @var Collection<ValueDefinition> */
     private Collection $properties;
     /** @var Collection<object> */
     private Collection $attributes;
     private ?string $description = null;
     private bool $virtual = false;
+    private bool $isInterface = false;
+    private bool $isEnum = false;
+    private bool $isTrait = false;
 
     /**
      * @param class-string $className
@@ -21,7 +24,7 @@ class ClassDefinition implements DefinitionInterface
     public function __construct(string $className)
     {
         $this->className = $className;
-        /** @var array<PropertyDefinition> $properties */
+        /** @var array<ValueDefinition> $properties */
         $properties = [];
         $this->properties = new Collection($properties);
         $this->attributes = new Collection([]);
@@ -39,7 +42,7 @@ class ClassDefinition implements DefinitionInterface
 
     /**
      * @psalm-mutation-free
-     * @return Collection<PropertyDefinition>
+     * @return Collection<ValueDefinition>
      */
     #[Pure]
     public function getProperties(): Collection
@@ -48,7 +51,7 @@ class ClassDefinition implements DefinitionInterface
     }
 
     /**
-     * @param Collection<PropertyDefinition> $properties
+     * @param Collection<ValueDefinition> $properties
      */
     public function setProperties(Collection $properties): void
     {
@@ -96,5 +99,35 @@ class ClassDefinition implements DefinitionInterface
     public function setVirtual(bool $virtual): void
     {
         $this->virtual = $virtual;
+    }
+
+    public function isInterface(): bool
+    {
+        return $this->isInterface;
+    }
+
+    public function setIsInterface(bool $isInterface): void
+    {
+        $this->isInterface = $isInterface;
+    }
+
+    public function isEnum(): bool
+    {
+        return $this->isEnum;
+    }
+
+    public function setIsEnum(bool $isEnum): void
+    {
+        $this->isEnum = $isEnum;
+    }
+
+    public function isTrait(): bool
+    {
+        return $this->isTrait;
+    }
+
+    public function setIsTrait(bool $isTrait): void
+    {
+        $this->isTrait = $isTrait;
     }
 }
