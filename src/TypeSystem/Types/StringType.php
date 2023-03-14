@@ -20,4 +20,9 @@ final class StringType implements TypeInterface
     {
         $this->restriction = $restriction;
     }
+
+    public function __toString(): string
+    {
+        return 'string';
+    }
 }

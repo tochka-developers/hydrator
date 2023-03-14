@@ -27,4 +27,9 @@ final class ArrayType implements TypeInterface
         $this->keyType = $keyType;
         $this->valueType = $valueType;
     }
+
+    public function __toString(): string
+    {
+        return sprintf('array<%s,%s>', $this->keyType, $this->valueType);
+    }
 }

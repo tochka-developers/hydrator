@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator;
 
 use Doctrine\Common\Annotations\AnnotationReader as DoctrineAnnotationReader;
@@ -9,15 +11,12 @@ use phpDocumentor\Reflection\DocBlockFactory as ReflectionDocBlockFactory;
 use Spiral\Attributes\AnnotationReader as SpiralAnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\MergeReader;
-use Tochka\Hydrator\Casters\BenSampoEnumCaster;
-use Tochka\Hydrator\Casters\CarbonCaster;
-use Tochka\Hydrator\Casters\EnumCaster;
 use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
-use Tochka\Hydrator\Contracts\CasterRegistryInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
 use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
+use Tochka\Hydrator\Contracts\HydratorInterface;
 use Tochka\Hydrator\Contracts\MethodDefinitionParserInterface;
 use Tochka\Hydrator\Definitions\ClassDefinitionParser;
 use Tochka\Hydrator\Definitions\ClassDefinitionsRegistry;
@@ -28,11 +27,23 @@ use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
 use Tochka\Hydrator\ExtendedReflection\TypeFactories\DocBlockTypeFactoryMiddleware;
 use Tochka\Hydrator\ExtendedReflection\TypeFactories\ReflectionTypeFactoryMiddleware;
 use Tochka\Hydrator\Extractors\ArrayExtractor;
-use Tochka\Hydrator\Extractors\MixedExtractor;
+use Tochka\Hydrator\Extractors\BenSampoEnumExtractor;
+use Tochka\Hydrator\Extractors\CarbonExtractor;
+use Tochka\Hydrator\Extractors\DateTimeExtractor;
+use Tochka\Hydrator\Extractors\DIExtractor;
+use Tochka\Hydrator\Extractors\EnumExtractor;
+use Tochka\Hydrator\Extractors\ExtractByExtractor;
+use Tochka\Hydrator\Extractors\NamedObjectExtractor;
+use Tochka\Hydrator\Extractors\NullExtractor;
 use Tochka\Hydrator\Extractors\ObjectExtractor;
 use Tochka\Hydrator\Extractors\StringExtractor;
-use Tochka\Hydrator\Extractors\StrongExtractor;
-use Tochka\Hydrator\Support\CasterRegistry;
+use Tochka\Hydrator\Extractors\StrongScalarExtractor;
+use Tochka\Hydrator\Extractors\UnionExtractor;
+use Tochka\Hydrator\Hydrators\ArrayHydrator;
+use Tochka\Hydrator\Hydrators\BenSampoEnumHydrator;
+use Tochka\Hydrator\Hydrators\CarbonHydrator;
+use Tochka\Hydrator\Hydrators\EnumHydrator;
+use Tochka\Hydrator\Hydrators\ObjectHydrator;
 
 class HydratorServiceProvider extends ServiceProvider
 {
@@ -88,39 +99,34 @@ class HydratorServiceProvider extends ServiceProvider
             }
         );
 
-        $this->app->singleton(
-            CasterRegistryInterface::class,
-            function (Container $container): CasterRegistry {
-                $registry = new CasterRegistry($container);
-
-                if (class_exists('\BenSampo\Enum\Enum')) {
-                    $registry->addCaster(new BenSampoEnumCaster());
-                }
-                if (class_exists('\Carbon\Carbon')) {
-                    $registry->addCaster(new CarbonCaster());
-                }
-                if (function_exists('enum_exists')) {
-                    $registry->addCaster(new EnumCaster());
-                }
-
-                return $registry;
-            }
-        );
-
         $this->app->singleton(ClassDefinitionsRegistryInterface::class, ClassDefinitionsRegistry::class);
         $this->app->singleton(ClassDefinitionParserInterface::class, ClassDefinitionParser::class);
         $this->app->singleton(MethodDefinitionParserInterface::class, MethodDefinitionParser::class);
+        $this->app->singleton(ExtractorInterface::class, Extractor::class);
+        $this->app->singleton(HydratorInterface::class, Hydrator::class);
 
-        $this->app->singleton(ExtractorInterface::class, function (Container $container): Extractor {
-            /** @var Extractor $extractor */
-            $extractor = $container->make(Extractor::class);
-            $extractor->registerValueExtractor(new MixedExtractor());
-            $extractor->registerValueExtractor(new StringExtractor());
-            $extractor->registerValueExtractor(new StrongExtractor());
-            $extractor->registerValueExtractor(new ArrayExtractor());
-            $extractor->registerValueExtractor(new ObjectExtractor());
+        $this->app->afterResolving(ExtractorInterface::class, function (ExtractorInterface $extractor) {
+            $extractor->registerExtractor(DIExtractor::class);
+            $extractor->registerExtractor(ExtractByExtractor::class);
+            $extractor->registerExtractor(NullExtractor::class);
+            $extractor->registerExtractor(UnionExtractor::class);
+            $extractor->registerExtractor(BenSampoEnumExtractor::class);
+            $extractor->registerExtractor(EnumExtractor::class);
+            $extractor->registerExtractor(CarbonExtractor::class);
+            $extractor->registerExtractor(DateTimeExtractor::class);
+            $extractor->registerExtractor(StrongScalarExtractor::class);
+            $extractor->registerExtractor(StringExtractor::class);
+            $extractor->registerExtractor(ArrayExtractor::class);
+            $extractor->registerExtractor(NamedObjectExtractor::class);
+            $extractor->registerExtractor(ObjectExtractor::class);
+        });
 
-            return $extractor;
+        $this->app->afterResolving(HydratorInterface::class, function (HydratorInterface $hydrator) {
+            $hydrator->registerHydrator(BenSampoEnumHydrator::class);
+            $hydrator->registerHydrator(EnumHydrator::class);
+            $hydrator->registerHydrator(CarbonHydrator::class);
+            $hydrator->registerHydrator(ArrayHydrator::class);
+            $hydrator->registerHydrator(ObjectHydrator::class);
         });
     }
 

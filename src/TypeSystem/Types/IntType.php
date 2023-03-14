@@ -21,4 +21,9 @@ final class IntType implements TypeInterface
         $this->min = $min;
         $this->max = $max;
     }
+
+    public function __toString(): string
+    {
+        return 'int';
+    }
 }

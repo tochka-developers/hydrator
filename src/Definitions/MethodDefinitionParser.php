@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions;
 
+use Tochka\Hydrator\Attributes\Ignore;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
 use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
@@ -9,7 +12,7 @@ use Tochka\Hydrator\Contracts\MethodDefinitionParserInterface;
 use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\Definitions\DTO\MethodDefinition;
 use Tochka\Hydrator\Definitions\DTO\ReturnDefinition;
-use Tochka\Hydrator\Exceptions\MethodNotDefinedException;
+use Tochka\Hydrator\Exceptions\MethodNotDefinedExceptionBase;
 use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedMethodReflection;
 
 class MethodDefinitionParser implements MethodDefinitionParserInterface
@@ -39,25 +42,26 @@ class MethodDefinitionParser implements MethodDefinitionParserInterface
         try {
             $reflection = $this->reflectionFactory->makeForMethod($className, $methodName);
         } catch (\ReflectionException) {
-            throw new MethodNotDefinedException(sprintf('Method [%s::%s] is not defined', $className, $methodName));
+            throw new MethodNotDefinedExceptionBase(sprintf('Method [%s::%s] is not defined', $className, $methodName));
         }
 
-        $methodDefinition->setAttributes($reflection->getAttributes());
-        $description = $reflection->getDescription();
-        if ($description !== null) {
-            $methodDefinition->setDescription($description);
-        }
+        $methodDefinition->attributes = $reflection->getAttributes();
+        $methodDefinition->description = $reflection->getDescription();
 
         $parameters = [];
         foreach ($reflection->getParameters() as $parameterReflection) {
+            if ($parameterReflection->getAttributes()->has(Ignore::class)) {
+                continue;
+            }
+
             $parameter = $this->getValueDefinition($parameterReflection);
-            $this->getClassDefinitionsFromType($this->classDefinitionParser, $parameter->getType());
+            $this->getClassDefinitionsFromType($this->classDefinitionParser, $parameter->type);
 
             $parameters[] = $parameter;
         }
 
-        $methodDefinition->setParameters(new Collection($parameters));
-        $methodDefinition->setReturnDefinition($this->getReturnDefinition($reflection));
+        $methodDefinition->parameters = new Collection($parameters);
+        $methodDefinition->returnDefinition = $this->getReturnDefinition($reflection);
 
         return $methodDefinition;
     }
@@ -65,10 +69,7 @@ class MethodDefinitionParser implements MethodDefinitionParserInterface
     public function getReturnDefinition(ExtendedMethodReflection $reflection): ReturnDefinition
     {
         $definition = new ReturnDefinition($reflection->getReturnType());
-        $description = $reflection->getReturnDescription();
-        if ($description !== null) {
-            $definition->setDescription($description);
-        }
+        $definition->description = $reflection->getReturnDescription();
 
         return $definition;
     }

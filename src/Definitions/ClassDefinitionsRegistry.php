@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions;
 
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
@@ -14,7 +16,7 @@ class ClassDefinitionsRegistry implements ClassDefinitionsRegistryInterface
 
     public function add(ClassDefinition $classDefinition): void
     {
-        $this->classDefinitions[$classDefinition->getClassName()] = $classDefinition;
+        $this->classDefinitions[$classDefinition->className] = $classDefinition;
     }
 
     public function get(string $className): ?ClassDefinition

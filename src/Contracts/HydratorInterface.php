@@ -2,34 +2,19 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Tochka\Hydrator\DTO\ParameterDefinition;
-use Tochka\Hydrator\DTO\PropertyDefinition;
-use Tochka\Hydrator\DTO\ValueDefinition;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Tochka\Hydrator\Definitions\DTO\Collection;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\TypeSystem\TypeInterface;
 
 interface HydratorInterface
 {
     /**
-     * @param array $parametersToHydrate
-     * @param class-string $className
-     * @param string $methodName
-     * @return array
+     * @param ValueHydratorInterface|class-string<ValueHydratorInterface> $extractor
+     * @return void
+     * @throws BindingResolutionException
      */
-    public function hydrateMethodParameters(array $parametersToHydrate, string $className, string $methodName): array;
+    public function registerHydrator(ValueHydratorInterface|string $hydrator): void;
 
-    /**
-     * @param object $objectToHydrate
-     * @param class-string $className
-     * @return object
-     */
-    public function hydrateObject(object $objectToHydrate, string $className): object;
-
-    public function hydrateProperty(
-        mixed $propertyToHydrate,
-        PropertyDefinition $propertyDefinition,
-        object $hydratedObject
-    ): mixed;
-
-    public function hydrateParameter(mixed $parameterToHydrate, ParameterDefinition $parameterDefinition): mixed;
-
-    public function hydrateValue(mixed $valueToHydrate, ValueDefinition $valueDefinition): mixed;
+    public function hydrate(mixed $value, TypeInterface $type, Collection $attributes, ?Context $context = null): mixed;
 }

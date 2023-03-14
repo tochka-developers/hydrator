@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\ExtendedReflection\TypeFactories;
 
 use phpDocumentor\Reflection\DocBlock\Tags\Param;
@@ -46,6 +48,7 @@ use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedParameterReflection;
 use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedPropertyReflection;
 use Tochka\Hydrator\ExtendedReflection\Traits\DocBlockOperationsTrait;
 use Tochka\Hydrator\ExtendedReflection\Traits\FullyQualifiedClassName;
+use Tochka\Hydrator\TypeSystem\DTO\BoolRestrictionEnum;
 use Tochka\Hydrator\TypeSystem\DTO\StringRestrictionEnum;
 use Tochka\Hydrator\TypeSystem\TypeComparator;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
@@ -53,7 +56,6 @@ use Tochka\Hydrator\TypeSystem\Types\ArrayKeyType;
 use Tochka\Hydrator\TypeSystem\Types\ArrayType;
 use Tochka\Hydrator\TypeSystem\Types\BoolType;
 use Tochka\Hydrator\TypeSystem\Types\CallableType;
-use Tochka\Hydrator\TypeSystem\Types\FalseType;
 use Tochka\Hydrator\TypeSystem\Types\FloatType;
 use Tochka\Hydrator\TypeSystem\Types\IntersectionType;
 use Tochka\Hydrator\TypeSystem\Types\IntType;
@@ -65,7 +67,6 @@ use Tochka\Hydrator\TypeSystem\Types\ObjectType;
 use Tochka\Hydrator\TypeSystem\Types\ResourceType;
 use Tochka\Hydrator\TypeSystem\Types\ScalarType;
 use Tochka\Hydrator\TypeSystem\Types\StringType;
-use Tochka\Hydrator\TypeSystem\Types\TrueType;
 use Tochka\Hydrator\TypeSystem\Types\UnionType;
 use Tochka\Hydrator\TypeSystem\Types\VoidType;
 
@@ -181,7 +182,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
             List_::class => $this->clarifyArrayType($type, $reflector),
             Boolean::class => new BoolType(),
             Callable_::class => new CallableType(),
-            False_::class => new FalseType(),
+            False_::class => new BoolType(BoolRestrictionEnum::FALSE),
             Float_::class => new FloatType(),
             Integer::class,
             IntegerRange::class,
@@ -204,7 +205,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
             NumericString::class,
             NonEmptyString::class,
             InterfaceString::class => $this->clarifyStringType($type),
-            True_::class => new TrueType(),
+            True_::class => new BoolType(BoolRestrictionEnum::TRUE),
             Void_::class => new VoidType(),
             Scalar::class => new ScalarType(),
             default => new MixedType(),
@@ -294,7 +295,7 @@ class DocBlockTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
         }
 
         if ($type->getFqsen() !== null) {
-            return new NamedObjectType($this->fullyQualifiedClassName($type->getFqsen()));
+            return new NamedObjectType($this->fullyQualifiedClassName((string)$type->getFqsen()));
         }
 
         return new ObjectType();

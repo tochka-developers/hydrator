@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions\DTO;
 
 use Illuminate\Contracts\Support\Arrayable;
@@ -16,7 +18,7 @@ final class Collection implements \IteratorAggregate, \Countable
     /**
      * @param list<TValue> $items
      */
-    public function __construct(array $items)
+    public function __construct(array $items = [])
     {
         $this->items = $items;
     }
@@ -61,13 +63,25 @@ final class Collection implements \IteratorAggregate, \Countable
     /**
      * @psalm-mutation-free
      * @param pure-callable(TValue): bool $filter
-     * @return self
+     * @return self<TValue>
      */
     public function filter(callable $filter): self
     {
         $values = array_values(
             array_filter($this->items, $filter)
         );
+
+        return new self($values);
+    }
+
+    /**
+     * @param callable(mixed, mixed): int $sort
+     * @return self<TValue>
+     */
+    public function sort(callable $sort): self
+    {
+        $values = $this->items;
+        usort($values, $sort);
 
         return new self($values);
     }

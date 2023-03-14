@@ -27,4 +27,9 @@ final class IterableType implements TypeInterface
         $this->valueType = $valueType;
         $this->keyType = $keyType;
     }
+
+    public function __toString(): string
+    {
+        return sprintf('iterable<%s,%s>', $this->keyType, $this->valueType);
+    }
 }

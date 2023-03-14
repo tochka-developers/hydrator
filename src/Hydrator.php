@@ -1,50 +1,83 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator;
 
-use Tochka\Hydrator\Contracts\DefinitionParserInterface;
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Tochka\Hydrator\Contracts\HydratorInterface;
-use Tochka\Hydrator\DTO\ParameterDefinition;
-use Tochka\Hydrator\DTO\PropertyDefinition;
-use Tochka\Hydrator\DTO\ValueDefinition;
+use Tochka\Hydrator\Contracts\ValueHydratorInterface;
+use Tochka\Hydrator\Definitions\DTO\Collection;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\Exceptions\NoTypeHandlerException;
+use Tochka\Hydrator\TypeSystem\TypeFromValue;
+use Tochka\Hydrator\TypeSystem\TypeInterface;
 
 class Hydrator implements HydratorInterface
 {
-    private DefinitionParserInterface $parametersParser;
+    private Container $container;
+    private TypeFromValue $typeFromValue;
+    /** @var list<ValueHydratorInterface> */
+    private array $hydrators = [];
 
-    public function __construct(DefinitionParserInterface $parametersParser)
+    public function __construct(Container $container, TypeFromValue $typeFromValue)
     {
-        $this->parametersParser = $parametersParser;
+        $this->container = $container;
+        $this->typeFromValue = $typeFromValue;
     }
 
-    public function hydrateMethodParameters(array $parametersForHydrate, string $className, string $methodName): array
+    /**
+     * @param ValueHydratorInterface|class-string<ValueHydratorInterface> $hydrator
+     * @return void
+     * @throws BindingResolutionException
+     */
+    public function registerHydrator(ValueHydratorInterface|string $hydrator): void
     {
-        $parametersReference = $this->parametersParser->getMethodParameters($className, $methodName);
-
-        foreach ($parametersReference as $parameterReference) {
+        if (is_string($hydrator)) {
+            $this->hydrators[] = $this->container->make($hydrator);
+        } else {
+            $this->hydrators[] = $hydrator;
         }
     }
 
-    public function hydrateObject(object $objectToHydrate, string $className): object
-    {
-        // TODO: Implement hydrateObject() method.
-    }
-
-    public function hydrateProperty(
-        mixed $propertyToHydrate,
-        PropertyDefinition $propertyDefinition,
-        object $hydratedObject
+    /**
+     * @template T
+     * @param mixed $value
+     * @param TypeInterface<T> $type
+     * @return T
+     */
+    public function hydrate(
+        mixed $value,
+        TypeInterface $type,
+        ?Collection $attributes = null,
+        ?Context $context = null
     ): mixed {
-        // TODO: Implement hydrateProperty() method.
+        $fromContainer = new FromContainer($value, $this->typeFromValue->inferType($value));
+        $toContainer = new ToContainer($type, $attributes ?? new Collection([]));
+        return $this->handle($this->hydrators, $fromContainer, $toContainer, $context);
     }
 
-    public function hydrateParameter(mixed $parameterToHydrate, ParameterDefinition $parameterDefinition): mixed
+    /**
+     * @param list<ValueHydratorInterface> $hydrators
+     */
+    private function handle(array $hydrators, FromContainer $from, ToContainer $to, ?Context $context): mixed
     {
-        // TODO: Implement hydrateParameter() method.
-    }
+        $hydrator = array_shift($hydrators);
 
-    public function hydrateValue(mixed $valueToHydrate, ValueDefinition $valueDefinition): mixed
-    {
-        // TODO: Implement hydrateValue() method.
+        if ($hydrator !== null) {
+            return $hydrator->hydrate(
+                $from,
+                $to,
+                $context,
+                function (FromContainer $from, ToContainer $to, ?Context $context) use ($hydrators): mixed {
+                    return $this->handle($hydrators, $from, $to, $context);
+                }
+            );
+        }
+
+        throw new NoTypeHandlerException($context);
     }
 }

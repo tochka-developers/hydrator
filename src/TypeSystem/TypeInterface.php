@@ -11,5 +11,5 @@ namespace Tochka\Hydrator\TypeSystem;
  */
 interface TypeInterface
 {
-
+    public function __toString(): string;
 }

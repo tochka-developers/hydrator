@@ -2,14 +2,14 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Tochka\Hydrator\DTO\HydrateContainer;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
 
 interface ValueHydratorInterface
 {
     /**
-     * @param HydrateContainer $extractContainer
-     * @param callable(HydrateContainer): mixed $next
-     * @return mixed
+     * @param callable(FromContainer, ToContainer, ?Context): mixed $next
      */
-    public function hydrate(HydrateContainer $extractContainer, callable $next): mixed;
+    public function hydrate(FromContainer $from, ToContainer $to, ?Context $context, callable $next): mixed;
 }

@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\ExtendedReflection;
 
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Tochka\Hydrator\Exceptions\TypeFactoryException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Tochka\Hydrator\Exceptions\ContainerException;
 use Tochka\Hydrator\ExtendedReflection\TypeFactories\TypeFactoryMiddlewareInterface;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 use Tochka\Hydrator\TypeSystem\Types\MixedType;
@@ -15,12 +17,12 @@ final class ExtendedTypeFactory
      * @var array<TypeFactoryMiddlewareInterface|class-string<TypeFactoryMiddlewareInterface>>
      */
     private array $typeFactoryMiddleware;
-    private Container $container;
+    private ContainerInterface $container;
 
     /**
      * @param array<TypeFactoryMiddlewareInterface|class-string<TypeFactoryMiddlewareInterface>> $typeFactoryMiddleware
      */
-    public function __construct(Container $container, array $typeFactoryMiddleware = [])
+    public function __construct(ContainerInterface $container, array $typeFactoryMiddleware = [])
     {
         $this->typeFactoryMiddleware = $typeFactoryMiddleware;
         $this->container = $container;
@@ -65,27 +67,29 @@ final class ExtendedTypeFactory
     private function getOrMakeMiddleware(
         TypeFactoryMiddlewareInterface|string $middleware
     ): TypeFactoryMiddlewareInterface {
-        if (is_string($middleware)) {
-            try {
-                /** @var T $middleware */
-                $middleware = $this->container->make($middleware);
-            } catch (BindingResolutionException $e) {
-                throw new TypeFactoryException(
-                    'Error while making TypeFactoryMiddleware: error binding resolution',
-                    $e
-                );
-            }
-        }
-
         if ($middleware instanceof TypeFactoryMiddlewareInterface) {
             return $middleware;
         }
 
-        throw new TypeFactoryException(
-            sprintf(
-                'Error while making TypeFactoryMiddleware: it must be implement interface [%s]',
-                TypeFactoryMiddlewareInterface::class
-            )
-        );
+        try {
+            /** @var T $middlewareInstance */
+            $middlewareInstance = $this->container->get($middleware);
+        } catch (ContainerExceptionInterface $e) {
+            throw new ContainerException(
+                sprintf('Error while making [%s]: error binding resolution', $middleware),
+                $e
+            );
+        }
+
+        if (!$middlewareInstance instanceof TypeFactoryMiddlewareInterface) {
+            throw new ContainerException(
+                sprintf(
+                    'Error while making TypeFactoryMiddleware: it must be implement interface [%s]',
+                    TypeFactoryMiddlewareInterface::class
+                )
+            );
+        }
+
+        return $middlewareInstance;
     }
 }

@@ -1,105 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions\DTO;
 
-use JetBrains\PhpStorm\Pure;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 
+/**
+ * @template TValueType
+ */
 class ValueDefinition
 {
-    private string $name;
-    private TypeInterface $type;
-    private bool $required = false;
-    private mixed $defaultValue = null;
-    private bool $hasDefaultValue = false;
+    public readonly string $name;
+    /** @var TypeInterface<TValueType> */
+    public readonly TypeInterface $type;
+    public bool $required = false;
+    /** @var TValueType|null */
+    public mixed $defaultValue = null;
+    public bool $hasDefaultValue = false;
     /** @var Collection<object> */
-    private Collection $attributes;
-    private ?string $description = null;
+    public Collection $attributes;
+    public ?string $description = null;
 
+    /**
+     * @param TypeInterface<TValueType> $type
+     */
     public function __construct(string $name, TypeInterface $type)
     {
         $this->name = $name;
         $this->type = $type;
-        $this->attributes = new Collection([]);
-    }
-
-    /**
-     * @psalm-mutation-free
-     */
-    #[Pure]
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getType(): TypeInterface
-    {
-        return $this->type;
-    }
-
-    /**
-     * @psalm-mutation-free
-     */
-    #[Pure]
-    public function isRequired(): bool
-    {
-        return $this->required;
-    }
-
-    public function setRequired(bool $required): void
-    {
-        $this->required = $required;
-    }
-
-    /**
-     * @psalm-mutation-free
-     */
-    #[Pure]
-    public function getDefaultValue(): mixed
-    {
-        return $this->defaultValue;
+        $this->attributes = new Collection();
     }
 
     public function setDefaultValue(mixed $defaultValue): void
     {
         $this->defaultValue = $defaultValue;
         $this->hasDefaultValue = true;
-    }
-
-    /**
-     * @psalm-mutation-free
-     */
-    #[Pure]
-    public function hasDefaultValue(): bool
-    {
-        return $this->hasDefaultValue;
-    }
-
-    /**
-     * @return Collection<object>
-     */
-    #[Pure]
-    public function getAttributes(): Collection
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * @param Collection<object> $attributes
-     * @return void
-     */
-    public function setAttributes(Collection $attributes): void
-    {
-        $this->attributes = $attributes;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(string $description): void
-    {
-        $this->description = $description;
     }
 }

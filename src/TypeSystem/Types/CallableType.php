@@ -35,4 +35,9 @@ final class CallableType implements TypeInterface
             $parameters,
         );
     }
+
+    public function __toString(): string
+    {
+        return 'callable';
+    }
 }

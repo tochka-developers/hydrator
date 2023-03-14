@@ -1,32 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Extractors;
 
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
-use Tochka\Hydrator\DTO\Value;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
+use Tochka\Hydrator\TypeSystem\Types\FloatType;
+use Tochka\Hydrator\TypeSystem\Types\IntType;
+use Tochka\Hydrator\TypeSystem\Types\StringType;
 
-class StringExtractor implements ValueExtractorInterface
+final class StringExtractor implements ValueExtractorInterface
 {
-    public function extract(Value $value, callable $next): mixed
+    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
     {
-        $expectedType = $value->getType()->getScalarType();
-
-        if ($expectedType !== ScalarTypeEnum::TYPE_STRING) {
-            return $next($value);
+        if (!$to->type instanceof StringType) {
+            return $next($from, $to, $context);
         }
 
-        $actualType = ScalarTypeEnum::fromVarType($value->getValue());
-
-        if ($actualType->notOneOf(
-            ScalarTypeEnum::TYPE_FLOAT,
-            ScalarTypeEnum::TYPE_INTEGER,
-            ScalarTypeEnum::TYPE_STRING
-        )) {
-            // TODO: exception
-            throw new \RuntimeException();
+        if (!$from->type instanceof FloatType && !$from->type instanceof IntType && !$from->type instanceof StringType) {
+            throw new UnexpectedTypeException($to->type, $from->type, $context);
         }
 
-        return (string)$value->getValue();
+        return (string)$from->value;
     }
 }

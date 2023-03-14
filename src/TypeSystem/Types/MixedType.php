@@ -13,5 +13,8 @@ use Tochka\Hydrator\TypeSystem\TypeInterface;
  */
 final class MixedType implements TypeInterface
 {
-
+    public function __toString(): string
+    {
+        return 'mixed';
+    }
 }

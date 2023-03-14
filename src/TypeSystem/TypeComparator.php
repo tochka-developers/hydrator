@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\TypeSystem;
 
 use Tochka\Hydrator\TypeSystem\Types\IntersectionType;
+use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
 use Tochka\Hydrator\TypeSystem\Types\UnionType;
 
 class TypeComparator
@@ -45,6 +48,11 @@ class TypeComparator
                     return false;
                 }
             }
+        }
+
+        if ($type1 instanceof NamedObjectType) {
+            /** @var NamedObjectType $type2 Because $type1::class === $type2::class */
+            return $type1->className === $type2->className;
         }
 
         return true;

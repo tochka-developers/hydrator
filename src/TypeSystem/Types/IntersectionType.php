@@ -25,4 +25,9 @@ final class IntersectionType implements TypeInterface
     {
         $this->types = new Collection([$type1, $type2, ...$types]);
     }
+
+    public function __toString(): string
+    {
+        return implode('&', $this->types->all());
+    }
 }

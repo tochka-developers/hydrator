@@ -2,52 +2,26 @@
 
 namespace Tochka\Hydrator\Contracts;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\ParameterDefinition;
-use Tochka\Hydrator\DTO\PropertyDefinition;
-use Tochka\Hydrator\DTO\ValueDefinition;
+use Tochka\Hydrator\TypeSystem\TypeInterface;
 
 interface ExtractorInterface
 {
     /**
-     * @param object $parametersToExtract
-     * @param class-string $className
-     * @param string $methodName
-     * @param Context|null $previousContext
-     * @return array
+     * @template T of ValueExtractorInterface
+     * @param ValueExtractorInterface|class-string<T> $extractor
+     * @return void
      */
-    public function extractMethodParameters(
-        object $parametersToExtract,
-        string $className,
-        string $methodName,
-        ?Context $previousContext = null
-    ): array;
+    public function registerExtractor(ValueExtractorInterface|string $extractor): void;
 
     /**
-     * @template TExtractedObject
-     * @param object $objectToExtract
-     * @param class-string $className
-     * @param Context|null $previousContext
-     * @return TExtractedObject
+     * @template TValueType
+     * @template TReturnType
+     * @param TValueType $value
+     * @param TypeInterface<TReturnType> $type
+     * @return TReturnType
      */
-    public function extractObject(object $objectToExtract, string $className, ?Context $previousContext = null): object;
-
-    public function extractProperty(
-        mixed $propertyToExtract,
-        PropertyDefinition $propertyDefinition,
-        object $extractedObject,
-        ?Context $previousContext = null
-    ): mixed;
-
-    public function extractParameter(
-        mixed $parameterToExtract,
-        ParameterDefinition $parameterDefinition,
-        ?Context $previousContext = null
-    ): mixed;
-
-    public function extractValue(
-        mixed $valueToExtract,
-        ValueDefinition $valueDefinition,
-        ?Context $previousContext = null
-    ): mixed;
+    public function extract(mixed $value, TypeInterface $type, Collection $attributes, ?Context $context = null): mixed;
 }

@@ -1,30 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\DTO;
 
 class Context
 {
-    private readonly string $name;
-    private readonly ?Context $previous;
-
-    public function __construct(string $name, ?Context $previous = null)
-    {
-        $this->name = $name;
-        $this->previous = $previous;
+    /**
+     * @param class-string|null $className
+     */
+    public function __construct(
+        public readonly string $name,
+        private readonly ?string $className = null,
+        public readonly ?Context $previous = null
+    ) {
     }
 
-    public function getName(): string
+    /**
+     * @return class-string|null
+     */
+    public function getClassName(): ?string
     {
-        return $this->name;
+        return $this->className ?? $this->previous?->getClassName();
     }
 
-    public function getPrevious(): ?Context
+    public function __toString(): string
     {
-        return $this->previous;
-    }
-
-    public function toString(): string
-    {
-        return implode('.', array_filter([$this->getPrevious()?->toString(), $this->getName()]));
+        return implode('.', array_filter([(string)$this->previous, $this->name]));
     }
 }

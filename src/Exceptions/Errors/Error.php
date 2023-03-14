@@ -1,18 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Exceptions\Errors;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Tochka\Hydrator\DTO\Context;
 
-abstract class Error implements Arrayable
+abstract class Error
 {
-    public function __construct(string $code, string $message)
+    public readonly string $code;
+    public readonly string $message;
+    public readonly Context $context;
+
+    public function __construct(string $code, string $message, Context $context)
     {
-
-    }
-
-    public function toArray(): array
-    {
-
+        $this->code = $code;
+        $this->message = $message;
+        $this->context = $context;
     }
 }

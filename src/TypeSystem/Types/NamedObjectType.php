@@ -24,4 +24,9 @@ final class NamedObjectType implements TypeInterface
     {
         $this->className = $className;
     }
+
+    public function __toString(): string
+    {
+        return $this->className;
+    }
 }

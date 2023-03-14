@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\ExtendedReflection;
 
 use Tochka\Hydrator\TypeSystem\TypeInterface;

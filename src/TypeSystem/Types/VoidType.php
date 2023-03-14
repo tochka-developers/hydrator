@@ -13,5 +13,8 @@ use Tochka\Hydrator\TypeSystem\TypeInterface;
  */
 final class VoidType implements TypeInterface
 {
-
+    public function __toString(): string
+    {
+        return 'void';
+    }
 }

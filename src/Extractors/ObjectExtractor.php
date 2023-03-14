@@ -1,40 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Extractors;
 
-use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
-use Tochka\Hydrator\DTO\Value;
-use Tochka\Hydrator\Exceptions\UnexpectedValueTypeException;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
+use Tochka\Hydrator\TypeSystem\Types\ArrayType;
+use Tochka\Hydrator\TypeSystem\Types\ObjectType;
 
-class ObjectExtractor implements ValueExtractorInterface
+final class ObjectExtractor implements ValueExtractorInterface
 {
-    private ExtractorInterface $extractor;
-
-    public function __construct(ExtractorInterface $extractor)
+    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
     {
-        $this->extractor = $extractor;
-    }
-
-    public function extract(Value $value, callable $next): mixed
-    {
-        if ($value->getType()->getScalarType() !== ScalarTypeEnum::TYPE_OBJECT) {
-            return $next($value);
+        if (!$to->type instanceof ObjectType) {
+            return $next($from, $to, $context);
         }
 
-        $objectValue = $value->getValue();
-
-        if (!is_object($objectValue)) {
-            throw new UnexpectedValueTypeException();
+        if (!$from->type instanceof ObjectType && !$from->type instanceof ArrayType) {
+            throw new UnexpectedTypeException($to->type, $from->type, $context);
         }
 
-        $className = $value->getType()->getClassName();
-
-        if ($className === null) {
-            return $objectValue;
-        }
-
-        return $this->extractor->extractObject($objectValue, $className);
+        return (object)$from->value;
     }
 }

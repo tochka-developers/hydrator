@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions;
 
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
@@ -16,16 +18,13 @@ trait GetValueDefinition
     public function getValueDefinition(ExtendedValueReflectionInterface $reflection): ValueDefinition
     {
         $property = new ValueDefinition($reflection->getName(), $reflection->getType());
-        $property->setAttributes($reflection->getAttributes());
-        $property->setRequired($reflection->isRequired());
+        $property->attributes = $reflection->getAttributes();
+        $property->required = $reflection->isRequired();
         if ($reflection->hasDefaultValue()) {
             $property->setDefaultValue($reflection->getDefaultValue());
         }
 
-        $description = $reflection->getDescription();
-        if ($description !== null) {
-            $property->setDescription($description);
-        }
+        $property->description = $reflection->getDescription();
 
         return $property;
     }

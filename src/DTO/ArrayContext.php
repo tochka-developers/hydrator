@@ -1,21 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\DTO;
 
 class ArrayContext extends Context
 {
-    public function __construct(string $arrayKey, ?Context $previous = null)
-    {
-        parent::__construct($arrayKey, $previous);
+    public function __construct(
+        public readonly string|int $arrayKey,
+        ?string $className = null,
+        ?Context $previous = null
+    ) {
+        parent::__construct((string)$arrayKey, $className, $previous);
     }
 
     public function getArrayKey(): string
     {
-        return '[' . $this->getName() . ']';
+        return '[' . $this->name . ']';
     }
 
-    public function toString(): string
+    public function __toString(): string
     {
-        return ($this->getPrevious()?->toString() ?? '') . $this->getArrayKey();
+        return ($this->previous ?? '') . $this->getArrayKey();
     }
 }

@@ -1,45 +1,63 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Extractors;
 
 use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\DTO\ScalarTypeEnum;
-use Tochka\Hydrator\DTO\Value;
-use Tochka\Hydrator\DTO\ValueDefinition;
-use Tochka\Hydrator\Exceptions\UnexpectedValueTypeException;
+use Tochka\Hydrator\Definitions\DTO\Collection;
+use Tochka\Hydrator\DTO\ArrayContext;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\Exceptions\BaseTransformingException;
+use Tochka\Hydrator\Exceptions\SameTransformingFieldException;
+use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
+use Tochka\Hydrator\TypeSystem\Types\ArrayType;
+use Tochka\Hydrator\TypeSystem\Types\MixedType;
 
-class ArrayExtractor implements ValueExtractorInterface
+final class ArrayExtractor implements ValueExtractorInterface
 {
-    private ExtractorInterface $extractor;
 
-    public function __construct(ExtractorInterface $extractor)
+    public function __construct(private readonly ExtractorInterface $extractor)
     {
-        $this->extractor = $extractor;
     }
 
-    public function extract(Value $value, callable $next): mixed
+    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
     {
-        if ($value->getType()->getScalarType() !== ScalarTypeEnum::TYPE_ARRAY) {
-            return $next($value);
+        if (!$to->type instanceof ArrayType) {
+            return $next($from, $to, $context);
         }
 
-        $arrayValue = $value->getValue();
-
-        if (!is_array($arrayValue)) {
-            throw new UnexpectedValueTypeException();
+        if (!$from->type instanceof ArrayType) {
+            throw new UnexpectedTypeException($to->type, $from->type, $context);
         }
 
-        $valueType = $value->getType()->getValueType();
-
-        if ($valueType === null) {
-            return $arrayValue;
+        if ($to->type->valueType instanceof MixedType) {
+            return $from->value;
         }
 
-        $valueDefinition = new ValueDefinition($valueType);
+        $result = [];
+        $errors = [];
 
-        return array_map(function (mixed $arrayValue) use ($valueDefinition): mixed {
-            return $this->extractor->extractValue($arrayValue, $valueDefinition);
-        }, $arrayValue);
+        foreach ($from->value as $key => $value) {
+            try {
+                $result[] = $this->extractor->extract(
+                    $value,
+                    $to->type->valueType,
+                    new Collection(),
+                    new ArrayContext($key, previous: $context)
+                );
+            } catch (BaseTransformingException $e) {
+                $errors[] = $e;
+            }
+        }
+
+        if (!empty($errors)) {
+            throw new SameTransformingFieldException($errors, $context);
+        }
+
+        return $result;
     }
 }

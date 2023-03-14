@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\ExtendedReflection\TypeFactories;
 
 use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionInterface;
+use Tochka\Hydrator\TypeSystem\DTO\BoolRestrictionEnum;
 use Tochka\Hydrator\TypeSystem\TypeInterface;
 use Tochka\Hydrator\TypeSystem\Types\ArrayType;
 use Tochka\Hydrator\TypeSystem\Types\BoolType;
 use Tochka\Hydrator\TypeSystem\Types\CallableType;
-use Tochka\Hydrator\TypeSystem\Types\FalseType;
 use Tochka\Hydrator\TypeSystem\Types\FloatType;
 use Tochka\Hydrator\TypeSystem\Types\IntersectionType;
 use Tochka\Hydrator\TypeSystem\Types\IntType;
@@ -18,7 +20,6 @@ use Tochka\Hydrator\TypeSystem\Types\NullType;
 use Tochka\Hydrator\TypeSystem\Types\ObjectType;
 use Tochka\Hydrator\TypeSystem\Types\ResourceType;
 use Tochka\Hydrator\TypeSystem\Types\StringType;
-use Tochka\Hydrator\TypeSystem\Types\TrueType;
 use Tochka\Hydrator\TypeSystem\Types\UnionType;
 use Tochka\Hydrator\TypeSystem\Types\VoidType;
 
@@ -60,7 +61,7 @@ class ReflectionTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
         }
         if ($reflectionType instanceof \ReflectionNamedType) {
             $type = $this->getNamedType($reflectionType);
-            if ($reflectionType->allowsNull()) {
+            if (!$type instanceof NullType && $reflectionType->allowsNull()) {
                 return new UnionType(new NullType(), $type);
             }
 
@@ -89,7 +90,7 @@ class ReflectionTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
             'array', 'iterable' => new ArrayType(),
             'bool' => new BoolType(),
             'callable', 'Closure', '\Closure' => new CallableType(),
-            'false' => new FalseType(),
+            'false' => new BoolType(BoolRestrictionEnum::FALSE),
             'float' => new FloatType(),
             'int' => new IntType(),
             'mixed' => new MixedType(),
@@ -98,7 +99,7 @@ class ReflectionTypeFactoryMiddleware implements TypeFactoryMiddlewareInterface
             'object' => new ObjectType(),
             'resource' => new ResourceType(),
             'string' => new StringType(),
-            'true' => new TrueType(),
+            'true' => new BoolType(BoolRestrictionEnum::TRUE),
             'void' => new VoidType(),
             default => new NamedObjectType($reflectionType->getName())
         };

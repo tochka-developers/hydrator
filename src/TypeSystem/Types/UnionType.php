@@ -20,12 +20,17 @@ final class UnionType implements TypeInterface
 
     /**
      * @no-named-arguments
-     * @param TypeInterface $type1
-     * @param TypeInterface $type2
-     * @param TypeInterface ...$types
+     * @param TypeInterface<TType> $type1
+     * @param TypeInterface<TType> $type2
+     * @param TypeInterface<TType> ...$types
      */
     public function __construct(TypeInterface $type1, TypeInterface $type2, TypeInterface ...$types)
     {
         $this->types = new Collection([$type1, $type2, ...$types]);
+    }
+
+    public function __toString(): string
+    {
+        return implode('|', $this->types->all());
     }
 }

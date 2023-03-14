@@ -3,11 +3,13 @@
 namespace Tochka\Hydrator\Hydrators;
 
 use Tochka\Hydrator\Contracts\ValueHydratorInterface;
-use Tochka\Hydrator\DTO\HydrateContainer;
+use Tochka\Hydrator\DTO\Context;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\ToContainer;
 
 class ObjectHydrator implements ValueHydratorInterface
 {
-    public function hydrate(HydrateContainer $extractContainer, callable $next): mixed
+    public function hydrate(FromContainer $from, ToContainer $to, ?Context $context, callable $next): mixed
     {
         // TODO: Implement hydrate() method.
     }

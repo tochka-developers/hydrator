@@ -1,229 +1,102 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator;
 
-use Illuminate\Container\Container;
-use Illuminate\Pipeline\Pipeline;
-use Tochka\Hydrator\Contracts\CasterRegistryInterface;
-use Tochka\Hydrator\Contracts\DefinitionParserInterface;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
-use Tochka\Hydrator\Contracts\TypeResolverInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\DTO\CastInfo\CastInfoForClass;
-use Tochka\Hydrator\DTO\CastInfo\CastInfoForType;
+use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\ExtractContainer;
-use Tochka\Hydrator\DTO\ParameterDefinition;
-use Tochka\Hydrator\DTO\PropertyDefinition;
-use Tochka\Hydrator\DTO\TypeDefinition;
-use Tochka\Hydrator\DTO\UnionTypeDefinition;
-use Tochka\Hydrator\DTO\ValueDefinition;
-use Tochka\Hydrator\Exceptions\ExtractException;
+use Tochka\Hydrator\DTO\FromContainer;
+use Tochka\Hydrator\DTO\RootContext;
+use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\Exceptions\ContainerException;
+use Tochka\Hydrator\Exceptions\NoTypeHandlerException;
+use Tochka\Hydrator\TypeSystem\TypeFromValue;
+use Tochka\Hydrator\TypeSystem\TypeInterface;
 
 class Extractor implements ExtractorInterface
 {
-    private DefinitionParserInterface $definitionParser;
-    private CasterRegistryInterface $casterRegistry;
-    private Pipeline $pipeline;
-    /** @var array<ValueExtractorInterface> */
-    private array $valueExtractors = [];
-    private TypeResolverInterface $typeResolver;
+    private ContainerInterface $container;
+    private TypeFromValue $typeFromValue;
+    /** @var list<ValueExtractorInterface> */
+    private array $extractors = [];
 
-    public function __construct(
-        Container $container,
-        DefinitionParserInterface $definitionParser,
-        CasterRegistryInterface $casterRegistry,
-        TypeResolverInterface $typeResolver,
-    ) {
-        $this->definitionParser = $definitionParser;
-        $this->casterRegistry = $casterRegistry;
-        $this->typeResolver = $typeResolver;
-        $this->pipeline = new Pipeline($container);
-    }
-
-    public function registerValueExtractor(ValueExtractorInterface $valueExtractor): void
+    public function __construct(ContainerInterface $container, TypeFromValue $typeFromValue)
     {
-        $this->valueExtractors[] = $valueExtractor;
-    }
-
-    public function extractMethodParameters(
-        object $parametersToExtract,
-        string $className,
-        string $methodName,
-        ?Context $previousContext = null
-    ): array {
-        $parameterDefinitions = $this->definitionParser->getMethodParameters($className, $methodName);
-
-        /** @var array<string, mixed> $extractedParameters */
-        $extractedParameters = [];
-
-        foreach ($parameterDefinitions as $parameterDefinition) {
-
-
-            try {
-                $parameterName = $parameterDefinition->getName();
-
-                if (!property_exists($parametersToExtract, $parameterName)) {
-                    if ($parameterDefinition->isRequired() && !$parameterDefinition->hasDefaultValue()) {
-                        // TODO: exception
-                        throw new \RuntimeException();
-                    }
-
-                    $extractedParameters[$parameterName] = $parameterDefinition->getDefaultValue();
-
-                    continue;
-                }
-
-                $extractedParameters[$parameterName] = $this->extractParameter(
-                    $parametersToExtract->$parameterName,
-                    $parameterDefinition,
-                    $previousContext
-                );
-            } catch (ExtractException $e) {
-                $context = new Context($parameterDefinition->getName(), $previousContext);
-
-            }
-        }
-
-        return $extractedParameters;
+        $this->container = $container;
+        $this->typeFromValue = $typeFromValue;
     }
 
     /**
-     * @template TExtractedObject
-     * @param object $objectToExtract
-     * @param class-string $className
-     * @param Context|null $previousContext
-     * @return TExtractedObject
-     * @throws \ReflectionException
+     * @template TExtractor of ValueExtractorInterface
+     * @param ValueExtractorInterface|class-string<TExtractor> $extractor
+     * @return void
      */
-    public function extractObject(object $objectToExtract, string $className, ?Context $previousContext = null): object
+    public function registerExtractor(ValueExtractorInterface|string $extractor): void
     {
-        $context = Context::forClass($className, $previousContext);
-
-        $classDefinition = $this->definitionParser->getClassDefinition($className);
-
-        if ($classDefinition->getCaster()->getExtractCaster() !== null) {
-            $castInfo = new CastInfoForClass($classDefinition);
-            /** @var TExtractedObject */
-            return $this->casterRegistry->extract(
-                $classDefinition->getCaster()->getExtractCaster(),
-                $castInfo,
-                $objectToExtract
-            );
+        if ($extractor instanceof ValueExtractorInterface) {
+            $this->extractors[] = $extractor;
+            return;
         }
 
-        $reflectionClass = new \ReflectionClass($className);
-        $extractedObject = $reflectionClass->newInstanceWithoutConstructor();
-
-        foreach ($classDefinition->getProperties() as $propertyReference) {
-            $propertyName = $propertyReference->getName();
-
-            if (!property_exists($objectToExtract, $propertyName)) {
-                if ($propertyReference->isRequired() && !$propertyReference->hasDefaultValue()) {
-                    // TODO: exception
-                    throw new \RuntimeException();
-                }
-
-                $extractedObject->$propertyName = $propertyReference->getDefaultValue();
-
-                continue;
-            }
-
-            $extractedObject->$propertyName = $this->extractProperty(
-                $objectToExtract->$propertyName,
-                $propertyReference,
-                $extractedObject
+        try {
+            /** @var TExtractor $extractorInstance*/
+            $extractorInstance = $this->container->get($extractor);
+            $this->extractors[] = $extractorInstance;
+        } catch (ContainerExceptionInterface $e) {
+            throw new ContainerException(
+                sprintf('Error while making [%s]: error binding resolution', $extractor),
+                $e
             );
         }
-
-        return $extractedObject;
     }
 
-    public function extractProperty(
-        mixed $propertyToExtract,
-        PropertyDefinition $propertyDefinition,
-        object $extractedObject,
-        ?Context $previousContext = null
+    /**
+     * @template TValueType
+     * @template TReturnType
+     * @param TValueType $value
+     * @param TypeInterface<TReturnType> $type
+     * @return TReturnType
+     */
+    public function extract(
+        mixed $value,
+        TypeInterface $type,
+        ?Collection $attributes = null,
+        ?Context $context = null
     ): mixed {
-        $context = Context::forProperty($propertyDefinition->getClassName(), $propertyDefinition->getName(), $previousContext);
-
-        if ($propertyToExtract === null && !$propertyDefinition->getType()->isNullable()) {
-            // TODO: exception
-            throw new \RuntimeException();
-        }
-
-        $castInfo = new CastInfoForType($propertyDefinition->getType(), $propertyDefinition->getAttributes());
-
-        $extractByMethod = $propertyDefinition->getExtractByMethod();
-        if ($extractByMethod !== null) {
-            if (method_exists($extractedObject, $extractByMethod)) {
-                return $extractedObject->$extractByMethod($castInfo, $propertyToExtract);
-            } else {
-                // TODO: exception
-                throw new \RuntimeException();
-            }
-        }
-
-        return $this->extractParameter($propertyToExtract, $propertyDefinition);
+        $fromContainer = new FromContainer($value, $this->typeFromValue->inferType($value));
+        $toContainer = new ToContainer($type, $attributes ?? new Collection());
+        return $this->handle($this->extractors, $fromContainer, $toContainer, $context ?? new RootContext());
     }
 
-    public function extractParameter(mixed $parameterToExtract, ParameterDefinition $parameterDefinition, ?Context $previousContext = null): mixed
+    /**
+     * @template TValueType
+     * @template TReturnType
+     * @param list<ValueExtractorInterface> $extractors
+     * @param FromContainer<TValueType> $from
+     * @param ToContainer<TReturnType> $to
+     * @param Context $context
+     * @return TReturnType
+     */
+    private function handle(array $extractors, FromContainer $from, ToContainer $to, Context $context): mixed
     {
-        $context = Context::forParameter(
-            $parameterDefinition->getClassName(),
-            $parameterDefinition->getMethodName(),
-            $parameterDefinition->getName(),
-            $previousContext
-        );
+        $extractor = array_shift($extractors);
 
-        if ($parameterToExtract === null && !$parameterDefinition->getType()->isNullable()) {
-            // TODO: exception
-            throw new \RuntimeException();
-        }
-
-        if ($parameterDefinition->getCaster()->getExtractCaster() !== null) {
-            $castInfo = new CastInfoForType($parameterDefinition->getType(), $parameterDefinition->getAttributes());
-
-            return $this->casterRegistry->extract(
-                $parameterDefinition->getCaster()->getExtractCaster(),
-                $castInfo,
-                $parameterToExtract
+        if ($extractor !== null) {
+            return $extractor->extract(
+                $from,
+                $to,
+                $context,
+                function (FromContainer $from, ToContainer $to, Context $context) use ($extractors): mixed {
+                    return $this->handle($extractors, $from, $to, $context);
+                }
             );
         }
 
-        return $this->extractValue($parameterToExtract, $parameterDefinition);
-    }
-
-    public function extractValue(mixed $valueToExtract, ValueDefinition $valueDefinition, ?Context $previousContext = null): mixed
-    {
-        if ($valueToExtract === null && !$valueDefinition->getType()->isNullable()) {
-            // TODO: exception
-            throw new \RuntimeException();
-        }
-
-        $type = $valueDefinition->getType();
-
-        if ($type instanceof UnionTypeDefinition || $type->needResolve()) {
-            $type = $this->typeResolver->resolve($valueToExtract, $type);
-
-            if ($type === null) {
-                // TODO: exception
-                throw new \RuntimeException();
-            }
-        }
-
-        return $this->extractValueToType($valueToExtract, $type);
-    }
-
-    private function extractValueToType(mixed $valueToExtract, TypeDefinition $typeReference): mixed
-    {
-        $container = new ExtractContainer($this, $valueToExtract, $typeReference);
-        return $this->pipeline->send($container)
-            ->through($this->valueExtractors)
-            ->via('extract')
-            ->then(function () {
-                // TODO: exception
-                throw new \RuntimeException();
-            });
+        throw new NoTypeHandlerException($context);
     }
 }

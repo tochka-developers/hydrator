@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tochka\Hydrator\Definitions;
 
+use Tochka\Hydrator\Attributes\Ignore;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
 use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
@@ -38,29 +41,29 @@ class ClassDefinitionParser implements ClassDefinitionParserInterface
         try {
             $reflection = $this->reflectionFactory->makeForClass($className);
         } catch (\ReflectionException) {
-            $classDefinition->setVirtual(true);
+            $classDefinition->virtual = true;
             return $classDefinition;
         }
 
-        $classDefinition->setAttributes($reflection->getAttributes());
-
-        $description = $reflection->getDescription();
-        if ($description !== null) {
-            $classDefinition->setDescription($description);
-        }
+        $classDefinition->attributes = $reflection->getAttributes();
+        $classDefinition->description = $reflection->getDescription();
 
         $properties = [];
         foreach ($reflection->getProperties() as $propertyReflection) {
+            if ($propertyReflection->getAttributes()->has(Ignore::class)) {
+                continue;
+            }
+
             $property = $this->getValueDefinition($propertyReflection);
-            $this->getClassDefinitionsFromType($this, $property->getType());
+            $this->getClassDefinitionsFromType($this, $property->type);
 
             $properties[] = $property;
         }
 
-        $classDefinition->setProperties(new Collection($properties));
-        $classDefinition->setIsEnum(enum_exists($className));
-        $classDefinition->setIsInterface(interface_exists($className));
-        $classDefinition->setIsTrait(trait_exists($className));
+        $classDefinition->properties = new Collection($properties);
+        $classDefinition->isEnum = enum_exists($className);
+        $classDefinition->isInterface = interface_exists($className);
+        $classDefinition->isTrait = trait_exists($className);
 
         return $classDefinition;
     }

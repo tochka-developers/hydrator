@@ -18,4 +18,9 @@ final class ArrayKeyType implements TypeAliasInterface
     {
         return new UnionType(new IntType(), new StringType());
     }
+
+    public function __toString(): string
+    {
+        return 'array-key';
+    }
 }

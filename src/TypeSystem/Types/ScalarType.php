@@ -18,4 +18,9 @@ final class ScalarType implements TypeAliasInterface
     {
         return new UnionType(new BoolType(), new IntType(), new FloatType(), new StringType());
     }
+
+    public function __toString(): string
+    {
+        return 'scalar';
+    }
 }
