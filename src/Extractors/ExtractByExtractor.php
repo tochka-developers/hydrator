@@ -9,10 +9,12 @@ use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Attributes\ExtractBy;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\ContainerValueException;
 
+/**
+ * @psalm-api
+ */
 final class ExtractByExtractor implements ValueExtractorInterface
 {
     public function __construct(
@@ -23,7 +25,7 @@ final class ExtractByExtractor implements ValueExtractorInterface
     /**
      * @template TExtractor of object
      */
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
         /**
          * @psalm-ignore-var
@@ -32,7 +34,7 @@ final class ExtractByExtractor implements ValueExtractorInterface
         $extractBy = $to->attributes->type(ExtractBy::class)->first();
 
         if ($extractBy === null) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
         /** @var class-string<TExtractor>|null $extractClassName */
@@ -61,6 +63,6 @@ final class ExtractByExtractor implements ValueExtractorInterface
             );
         }
 
-        return $extractor->$extractMethodName($from, $to, $context);
+        return $extractor->$extractMethodName($value, $to, $context);
     }
 }

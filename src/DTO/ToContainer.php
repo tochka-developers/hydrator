@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tochka\Hydrator\DTO;
 
-use Tochka\Hydrator\Definitions\DTO\Collection;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
 
 /**
  * @template TType

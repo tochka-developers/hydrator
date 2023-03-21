@@ -9,17 +9,19 @@ use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Attributes\ResolveBy;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\BaseTransformingException;
 use Tochka\Hydrator\Exceptions\ContainerValueException;
 use Tochka\Hydrator\Exceptions\UnionTypeResolveException;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
-use Tochka\Hydrator\TypeSystem\Types\StringType;
-use Tochka\Hydrator\TypeSystem\Types\UnionType;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
+use Tochka\TypeParser\TypeSystem\Types\StringType;
+use Tochka\TypeParser\TypeSystem\Types\UnionType;
 
+/**
+ * @psalm-api
+ */
 final class UnionExtractor implements ValueExtractorInterface
 {
     public function __construct(
@@ -28,10 +30,11 @@ final class UnionExtractor implements ValueExtractorInterface
     ) {
     }
 
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
+        /** @psalm-suppress RedundantCondition */
         if (!$to->type instanceof UnionType) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
         $sortableTypes = $to->type->types->sort($this->sortTypes(...));
@@ -46,7 +49,7 @@ final class UnionExtractor implements ValueExtractorInterface
                 $resolveBy->className ?? $context->getClassName(),
                 $resolveBy->methodName,
                 $sortableTypes,
-                $from->value,
+                $value,
                 $context
             );
 
@@ -54,14 +57,14 @@ final class UnionExtractor implements ValueExtractorInterface
                 throw new UnionTypeResolveException([], $context);
             }
 
-            return $this->extractor->extract($from->value, $resolvedType, $to->attributes, $context);
+            return $this->extractor->extract($value, $resolvedType, $to->attributes, $context);
         }
 
         // попробуем разрешить базовые типы
         $errors = [];
         foreach ($sortableTypes as $type) {
             try {
-                return $this->extractor->extract($from->value, $type, $to->attributes, $context);
+                return $this->extractor->extract($value, $type, $to->attributes, $context);
             } catch (BaseTransformingException $e) {
                 $errors[] = $e;
             }
@@ -90,7 +93,11 @@ final class UnionExtractor implements ValueExtractorInterface
             /** @var TResolver $resolver */
             $resolver = $this->container->get($resolveClassName);
         } catch (ContainerExceptionInterface $e) {
-            throw new ContainerValueException(sprintf('Error while make UnionType resolver [%s]', $resolveClassName), $context, $e);
+            throw new ContainerValueException(
+                sprintf('Error while make UnionType resolver [%s]', $resolveClassName),
+                $context,
+                $e
+            );
         }
 
         if (!method_exists($resolver, $resolveMethodName)) {

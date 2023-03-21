@@ -7,6 +7,9 @@ namespace Tochka\Hydrator\Definitions;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
 use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 
+/**
+ * @psalm-api
+ */
 class ClassDefinitionsRegistry implements ClassDefinitionsRegistryInterface
 {
     /**

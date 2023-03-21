@@ -7,23 +7,21 @@ namespace Tochka\Hydrator\Definitions;
 use Tochka\Hydrator\Attributes\Ignore;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
-use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
 use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
-use Tochka\Hydrator\Definitions\DTO\Collection;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\Contracts\ExtendedReflectionFactoryInterface;
 
+/**
+ * @psalm-api
+ */
 class ClassDefinitionParser implements ClassDefinitionParserInterface
 {
     use GetValueDefinition;
 
-    private ExtendedReflectionFactoryInterface $reflectionFactory;
-    private ClassDefinitionsRegistryInterface $classDefinitionsRegistry;
-
     public function __construct(
-        ExtendedReflectionFactoryInterface $reflectionFactory,
-        ClassDefinitionsRegistryInterface $classDefinitionsRegistry,
+        private readonly ExtendedReflectionFactoryInterface $reflectionFactory,
+        private readonly ClassDefinitionsRegistryInterface $classDefinitionsRegistry,
     ) {
-        $this->reflectionFactory = $reflectionFactory;
-        $this->classDefinitionsRegistry = $classDefinitionsRegistry;
     }
 
     /**
@@ -32,6 +30,7 @@ class ClassDefinitionParser implements ClassDefinitionParserInterface
     public function getDefinition(string $className): ClassDefinition
     {
         if ($this->classDefinitionsRegistry->has($className)) {
+            /** @var ClassDefinition */
             return $this->classDefinitionsRegistry->get($className);
         }
 
@@ -46,6 +45,7 @@ class ClassDefinitionParser implements ClassDefinitionParserInterface
         }
 
         $classDefinition->attributes = $reflection->getAttributes();
+        $classDefinition->summary = $reflection->getSummary();
         $classDefinition->description = $reflection->getDescription();
 
         $properties = [];

@@ -4,76 +4,80 @@ declare(strict_types=1);
 
 namespace Tochka\Hydrator;
 
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Container\BindingResolutionException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Contracts\HydratorInterface;
 use Tochka\Hydrator\Contracts\ValueHydratorInterface;
-use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
-use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\Hydrator\DTO\RootContext;
+use Tochka\Hydrator\Exceptions\ContainerException;
 use Tochka\Hydrator\Exceptions\NoTypeHandlerException;
-use Tochka\Hydrator\TypeSystem\TypeFromValue;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
+use Tochka\TypeParser\Collection;
 
+/**
+ * @psalm-api
+ *
+ * @psalm-import-type AfterHydrateType from ValueHydratorInterface
+ */
 class Hydrator implements HydratorInterface
 {
-    private Container $container;
-    private TypeFromValue $typeFromValue;
     /** @var list<ValueHydratorInterface> */
     private array $hydrators = [];
 
-    public function __construct(Container $container, TypeFromValue $typeFromValue)
-    {
-        $this->container = $container;
-        $this->typeFromValue = $typeFromValue;
+    public function __construct(
+        private readonly ContainerInterface $container,
+    ) {
     }
 
     /**
-     * @param ValueHydratorInterface|class-string<ValueHydratorInterface> $hydrator
+     * @template THydrator of ValueHydratorInterface
+     * @param ValueHydratorInterface|class-string<THydrator> $hydrator
      * @return void
-     * @throws BindingResolutionException
      */
     public function registerHydrator(ValueHydratorInterface|string $hydrator): void
     {
-        if (is_string($hydrator)) {
-            $this->hydrators[] = $this->container->make($hydrator);
-        } else {
+        if ($hydrator instanceof ValueHydratorInterface) {
             $this->hydrators[] = $hydrator;
+            return;
+        }
+
+        try {
+            /** @var THydrator $hydratorInstance */
+            $hydratorInstance = $this->container->get($hydrator);
+            $this->hydrators[] = $hydratorInstance;
+        } catch (ContainerExceptionInterface $e) {
+            throw new ContainerException(
+                sprintf('Error while making [%s]: error binding resolution', $hydrator),
+                $e
+            );
         }
     }
 
-    /**
-     * @template T
-     * @param mixed $value
-     * @param TypeInterface<T> $type
-     * @return T
-     */
-    public function hydrate(
-        mixed $value,
-        TypeInterface $type,
-        ?Collection $attributes = null,
-        ?Context $context = null
-    ): mixed {
-        $fromContainer = new FromContainer($value, $this->typeFromValue->inferType($value));
-        $toContainer = new ToContainer($type, $attributes ?? new Collection([]));
-        return $this->handle($this->hydrators, $fromContainer, $toContainer, $context);
+    public function hydrate(mixed $value, ?Collection $attributes = null, ?Context $context = null): mixed
+    {
+        return $this->handle(
+            $this->hydrators,
+            $value,
+            $attributes ?? new Collection(),
+            $context ?? new RootContext()
+        );
     }
 
     /**
      * @param list<ValueHydratorInterface> $hydrators
+     * @return AfterHydrateType
      */
-    private function handle(array $hydrators, FromContainer $from, ToContainer $to, ?Context $context): mixed
+    private function handle(array $hydrators, mixed $value, Collection $attributes, Context $context): mixed
     {
         $hydrator = array_shift($hydrators);
 
         if ($hydrator !== null) {
             return $hydrator->hydrate(
-                $from,
-                $to,
+                $value,
+                $attributes,
                 $context,
-                function (FromContainer $from, ToContainer $to, ?Context $context) use ($hydrators): mixed {
-                    return $this->handle($hydrators, $from, $to, $context);
+                function (mixed $value, Collection $attributes, Context $context) use ($hydrators): mixed {
+                    return $this->handle($hydrators, $value, $attributes, $context);
                 }
             );
         }

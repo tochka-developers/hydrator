@@ -12,20 +12,19 @@
     "require": {
         "php": "8.1.*|8.2.*",
         "doctrine/annotations": "^1.11",
-        "psr/container": "^2.0",
-        "illuminate/contracts": "^9.0|^10.0",
-        "illuminate/support": "^9.0|^10.0",
         "jetbrains/phpstorm-attributes": "^1.0",
         "phpdocumentor/reflection-docblock": "^3.0|^4.0|^5.0",
         "phpdocumentor/type-resolver": "^1.5",
-        "spiral/attributes": "^2.8"
+        "psr/container": "^2.0",
+        "spiral/attributes": "^2.8",
+        "tochka-developers/type-parser": "^1.0"
     },
     "require-dev": {
         "bensampo/laravel-enum": "^5.0|^6.0",
+        "illuminate/contracts": "^8.0|^9.0|^10.0",
         "laravel/pint": "^1.4",
         "mockery/mockery": "^1.5",
         "phpunit/phpunit": "^9.6",
-        "psalm/plugin-laravel": "^2.7",
         "roave/security-advisories": "dev-latest",
         "vimeo/psalm": "^5.6"
     },
@@ -39,16 +38,20 @@
             "Tochka\\Hydrator\\Tests\\": "tests"
         }
     },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Tochka\\Hydrator\\HydratorServiceProvider"
-            ]
-        }
-    },
     "scripts": {
         "lint": "pint --test",
         "lint-fix": "pint",
         "analyze": "psalm --no-cache"
-    }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/var/www/packages/type-parser",
+            "options": {
+                "versions": {
+                    "tochka-developers/type-parser": "v1.0.0"
+                }
+            }
+        }
+    ]
 }

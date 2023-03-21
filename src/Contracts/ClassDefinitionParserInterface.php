@@ -4,6 +4,9 @@ namespace Tochka\Hydrator\Contracts;
 
 use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 
+/**
+ * @psalm-api
+ */
 interface ClassDefinitionParserInterface
 {
     /**

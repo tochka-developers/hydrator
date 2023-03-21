@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Tochka\Hydrator\Definitions\DTO;
 
-use Tochka\Hydrator\TypeSystem\TypeInterface;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
 
 /**
+ * @psalm-api
+ *
  * @template TValueType
  */
 class ValueDefinition
@@ -20,6 +23,7 @@ class ValueDefinition
     public bool $hasDefaultValue = false;
     /** @var Collection<object> */
     public Collection $attributes;
+    public ?string $summary = null;
     public ?string $description = null;
 
     /**
@@ -32,6 +36,10 @@ class ValueDefinition
         $this->attributes = new Collection();
     }
 
+    /**
+     * @param TValueType $defaultValue
+     * @return void
+     */
     public function setDefaultValue(mixed $defaultValue): void
     {
         $this->defaultValue = $defaultValue;

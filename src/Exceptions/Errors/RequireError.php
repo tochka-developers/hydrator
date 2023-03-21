@@ -6,6 +6,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class RequireError extends Error
 {
     public const CODE = 'not_present_required';

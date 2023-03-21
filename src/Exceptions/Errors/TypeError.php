@@ -6,6 +6,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class TypeError extends Error
 {
     public const CODE = 'unexpected_type';
@@ -21,7 +24,7 @@ class TypeError extends Error
 
         parent::__construct(
             self::CODE,
-            sprintf(self::MESSAGE, $actualType, $expectedTypes),
+            sprintf(self::MESSAGE, $this->actualType, $this->expectedTypes),
             $context
         );
     }

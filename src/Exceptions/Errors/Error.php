@@ -6,6 +6,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 abstract class Error
 {
     public readonly string $code;

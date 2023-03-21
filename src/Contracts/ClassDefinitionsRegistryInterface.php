@@ -4,6 +4,9 @@ namespace Tochka\Hydrator\Contracts;
 
 use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 
+/**
+ * @psalm-api
+ */
 interface ClassDefinitionsRegistryInterface
 {
     public function add(ClassDefinition $classDefinition): void;
@@ -14,6 +17,8 @@ interface ClassDefinitionsRegistryInterface
     public function get(string $className): ?ClassDefinition;
 
     /**
+     * @psalm-assert-if-true ClassDefinition $this->get()
+     *
      * @param class-string $className
      */
     public function has(string $className): bool;

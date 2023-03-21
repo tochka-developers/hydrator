@@ -13,8 +13,8 @@ use Tochka\Hydrator\Exceptions\Errors\ValueError;
 class UnexpectedValueException extends BaseTransformingException
 {
     public function __construct(
-        string $actual,
-        string $expected,
+        string|int $actual,
+        string|int $expected,
         Context $context,
         ?\Throwable $previous = null
     ) {

@@ -2,11 +2,15 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
 
+/**
+ * @psalm-api
+ *
+ * @psalm-import-type BeforeHydrateType from ValueExtractorInterface
+ */
 interface ExtractorInterface
 {
     /**
@@ -17,9 +21,8 @@ interface ExtractorInterface
     public function registerExtractor(ValueExtractorInterface|string $extractor): void;
 
     /**
-     * @template TValueType
      * @template TReturnType
-     * @param TValueType $value
+     * @param BeforeHydrateType $value
      * @param TypeInterface<TReturnType> $type
      * @return TReturnType
      */

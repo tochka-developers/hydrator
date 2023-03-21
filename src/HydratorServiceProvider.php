@@ -9,23 +9,16 @@ use Illuminate\Container\Container;
 use Illuminate\Support\ServiceProvider;
 use phpDocumentor\Reflection\DocBlockFactory as ReflectionDocBlockFactory;
 use Spiral\Attributes\AnnotationReader as SpiralAnnotationReader;
-use Spiral\Attributes\AttributeReader;
+use Spiral\Attributes\AttributeReader as SpiralAttributeReader;
 use Spiral\Attributes\Composite\MergeReader;
-use Tochka\Hydrator\Contracts\AnnotationReaderInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
-use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\HydratorInterface;
 use Tochka\Hydrator\Contracts\MethodDefinitionParserInterface;
 use Tochka\Hydrator\Definitions\ClassDefinitionParser;
 use Tochka\Hydrator\Definitions\ClassDefinitionsRegistry;
 use Tochka\Hydrator\Definitions\MethodDefinitionParser;
-use Tochka\Hydrator\ExtendedReflection\AnnotationReader;
-use Tochka\Hydrator\ExtendedReflection\ExtendedReflectionFactory;
-use Tochka\Hydrator\ExtendedReflection\ExtendedTypeFactory;
-use Tochka\Hydrator\ExtendedReflection\TypeFactories\DocBlockTypeFactoryMiddleware;
-use Tochka\Hydrator\ExtendedReflection\TypeFactories\ReflectionTypeFactoryMiddleware;
 use Tochka\Hydrator\Extractors\ArrayExtractor;
 use Tochka\Hydrator\Extractors\BenSampoEnumExtractor;
 use Tochka\Hydrator\Extractors\CarbonExtractor;
@@ -39,12 +32,17 @@ use Tochka\Hydrator\Extractors\ObjectExtractor;
 use Tochka\Hydrator\Extractors\StringExtractor;
 use Tochka\Hydrator\Extractors\StrongScalarExtractor;
 use Tochka\Hydrator\Extractors\UnionExtractor;
-use Tochka\Hydrator\Hydrators\ArrayHydrator;
-use Tochka\Hydrator\Hydrators\BenSampoEnumHydrator;
-use Tochka\Hydrator\Hydrators\CarbonHydrator;
-use Tochka\Hydrator\Hydrators\EnumHydrator;
-use Tochka\Hydrator\Hydrators\ObjectHydrator;
+use Tochka\TypeParser\AttributeReader;
+use Tochka\TypeParser\Contracts\AttributeReaderInterface;
+use Tochka\TypeParser\Contracts\ExtendedReflectionFactoryInterface;
+use Tochka\TypeParser\ExtendedReflectionFactory;
+use Tochka\TypeParser\ExtendedTypeFactory;
+use Tochka\TypeParser\TypeFactories\DocBlockTypeFactoryMiddleware;
+use Tochka\TypeParser\TypeFactories\ReflectionTypeFactoryMiddleware;
 
+/**
+ * @psalm-api
+ */
 class HydratorServiceProvider extends ServiceProvider
 {
     private const IGNORED_ANNOTATIONS = [
@@ -68,12 +66,12 @@ class HydratorServiceProvider extends ServiceProvider
     {
         $this->registerIgnoredAnnotations();
 
-        $this->app->singleton(AnnotationReaderInterface::class, function (): AnnotationReaderInterface {
-            return new AnnotationReader(
+        $this->app->singleton(AttributeReaderInterface::class, function (): AttributeReader {
+            return new AttributeReader(
                 new MergeReader(
                     [
                         new SpiralAnnotationReader(),
-                        new AttributeReader(),
+                        new SpiralAttributeReader(),
                     ]
                 )
             );
@@ -121,13 +119,8 @@ class HydratorServiceProvider extends ServiceProvider
             $extractor->registerExtractor(ObjectExtractor::class);
         });
 
-        $this->app->afterResolving(HydratorInterface::class, function (HydratorInterface $hydrator) {
-            $hydrator->registerHydrator(BenSampoEnumHydrator::class);
-            $hydrator->registerHydrator(EnumHydrator::class);
-            $hydrator->registerHydrator(CarbonHydrator::class);
-            $hydrator->registerHydrator(ArrayHydrator::class);
-            $hydrator->registerHydrator(ObjectHydrator::class);
-        });
+//        $this->app->afterResolving(HydratorInterface::class, function (HydratorInterface $hydrator) {
+//        });
     }
 
     private function registerIgnoredAnnotations(): void

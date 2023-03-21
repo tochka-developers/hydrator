@@ -6,25 +6,25 @@ namespace Tochka\Hydrator\Extractors;
 
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
-use Tochka\Hydrator\TypeSystem\Types\FloatType;
-use Tochka\Hydrator\TypeSystem\Types\IntType;
-use Tochka\Hydrator\TypeSystem\Types\StringType;
+use Tochka\TypeParser\TypeSystem\Types\StringType;
 
+/**
+ * @psalm-api
+ */
 final class StringExtractor implements ValueExtractorInterface
 {
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
         if (!$to->type instanceof StringType) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
-        if (!$from->type instanceof FloatType && !$from->type instanceof IntType && !$from->type instanceof StringType) {
-            throw new UnexpectedTypeException($to->type, $from->type, $context);
+        if (!is_float($value) && !is_int($value) && !is_string($value)) {
+            throw new UnexpectedTypeException(gettype($value), 'string|int|float', $context);
         }
 
-        return (string)$from->value;
+        return (string)$value;
     }
 }

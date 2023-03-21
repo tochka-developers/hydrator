@@ -9,11 +9,13 @@ use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Attributes\DI;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\ContainerValueException;
-use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
+use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
 
+/**
+ * @psalm-api
+ */
 final class DIExtractor implements ValueExtractorInterface
 {
     public function __construct(
@@ -21,7 +23,7 @@ final class DIExtractor implements ValueExtractorInterface
     ) {
     }
 
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
         /**
          * @psalm-ignore-var
@@ -30,7 +32,7 @@ final class DIExtractor implements ValueExtractorInterface
         $di = $to->attributes->type(DI::class)->first();
 
         if ($di === null) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
         if ($di->name !== null) {

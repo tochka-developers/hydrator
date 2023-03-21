@@ -6,16 +6,19 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class Errors extends Error
 {
     public const CODE = 'same_errors';
     public const MESSAGE = 'Same errors while transforming';
 
-    /** @var array<Error> */
+    /** @var list<Error> */
     public readonly array $errors;
 
     /**
-     * @param array<Error> $errors
+     * @param list<Error> $errors
      */
     public function __construct(array $errors, Context $context)
     {

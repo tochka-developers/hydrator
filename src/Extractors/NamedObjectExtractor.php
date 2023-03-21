@@ -8,17 +8,17 @@ use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\Definitions\DTO\ClassDefinition;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\BaseTransformingException;
 use Tochka\Hydrator\Exceptions\MakeTargetException;
 use Tochka\Hydrator\Exceptions\SameTransformingFieldException;
 use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
 use Tochka\Hydrator\ExtractFactory;
-use Tochka\Hydrator\TypeSystem\Types\ArrayType;
-use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
-use Tochka\Hydrator\TypeSystem\Types\ObjectType;
+use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
 
+/**
+ * @psalm-api
+ */
 final class NamedObjectExtractor implements ValueExtractorInterface
 {
 
@@ -28,17 +28,18 @@ final class NamedObjectExtractor implements ValueExtractorInterface
     ) {
     }
 
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
+        /** @psalm-suppress RedundantCondition */
         if (!$to->type instanceof NamedObjectType) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
-        if (!$from->type instanceof ObjectType && !$from->type instanceof ArrayType) {
-            throw new UnexpectedTypeException($to->type, $from->type, $context);
+        if (!is_object($value) && !is_array($value)) {
+            throw new UnexpectedTypeException(gettype($value), 'array|object', $context);
         }
 
-        $value = (array)$from->value;
+        $value = (array)$value;
 
         $classDefinition = $this->classDefinitionParser->getDefinition($to->type->className);
         $context = new Context($context->name, $to->type->className, previous: $context->previous);

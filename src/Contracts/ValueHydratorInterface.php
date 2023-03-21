@@ -3,13 +3,18 @@
 namespace Tochka\Hydrator\Contracts;
 
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
-use Tochka\Hydrator\DTO\ToContainer;
+use Tochka\TypeParser\Collection;
 
+/**
+ * @psalm-type AfterHydrateType = scalar|array|object|null
+ */
 interface ValueHydratorInterface
 {
     /**
-     * @param callable(FromContainer, ToContainer, ?Context): mixed $next
+     * @template TValueType
+     * @param TValueType $value
+     * @param callable(TValueType, Collection, Context): AfterHydrateType $next
+     * @return AfterHydrateType
      */
-    public function hydrate(FromContainer $from, ToContainer $to, ?Context $context, callable $next): mixed;
+    public function hydrate(mixed $value, Collection $attributes, Context $context, callable $next): mixed;
 }

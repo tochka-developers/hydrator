@@ -3,18 +3,19 @@
 namespace Tochka\Hydrator\Contracts;
 
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 
+/**
+ * @psalm-type BeforeHydrateType = scalar|array|object|null
+ */
 interface ValueExtractorInterface
 {
     /**
-     * @template TValueType
      * @template TReturnType
-     * @param FromContainer<TValueType> $from
+     * @param BeforeHydrateType $value
      * @param ToContainer<TReturnType> $to
-     * @param callable(FromContainer, ToContainer, Context): mixed $next
+     * @param callable(BeforeHydrateType, ToContainer<TReturnType>, Context): TReturnType $next
      * @return TReturnType
      */
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed;
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed;
 }

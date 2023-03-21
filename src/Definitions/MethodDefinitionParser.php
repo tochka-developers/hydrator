@@ -6,31 +6,25 @@ namespace Tochka\Hydrator\Definitions;
 
 use Tochka\Hydrator\Attributes\Ignore;
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
-use Tochka\Hydrator\Contracts\ClassDefinitionsRegistryInterface;
-use Tochka\Hydrator\Contracts\ExtendedReflectionFactoryInterface;
 use Tochka\Hydrator\Contracts\MethodDefinitionParserInterface;
-use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\Definitions\DTO\MethodDefinition;
 use Tochka\Hydrator\Definitions\DTO\ReturnDefinition;
 use Tochka\Hydrator\Exceptions\MethodNotDefinedExceptionBase;
-use Tochka\Hydrator\ExtendedReflection\Reflectors\ExtendedMethodReflection;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\Contracts\ExtendedReflectionFactoryInterface;
+use Tochka\TypeParser\Reflectors\ExtendedMethodReflection;
 
+/**
+ * @psalm-api
+ */
 class MethodDefinitionParser implements MethodDefinitionParserInterface
 {
     use GetValueDefinition;
 
-    private ExtendedReflectionFactoryInterface $reflectionFactory;
-    private ClassDefinitionParserInterface $classDefinitionParser;
-    private ClassDefinitionsRegistryInterface $classDefinitionsRegistry;
-
     public function __construct(
-        ClassDefinitionsRegistryInterface $classDefinitionsRegistry,
-        ExtendedReflectionFactoryInterface $reflectionFactory,
-        ClassDefinitionParserInterface $classDefinitionParser,
+        private readonly ExtendedReflectionFactoryInterface $reflectionFactory,
+        private readonly ClassDefinitionParserInterface $classDefinitionParser,
     ) {
-        $this->reflectionFactory = $reflectionFactory;
-        $this->classDefinitionParser = $classDefinitionParser;
-        $this->classDefinitionsRegistry = $classDefinitionsRegistry;
     }
 
     /**
@@ -46,6 +40,7 @@ class MethodDefinitionParser implements MethodDefinitionParserInterface
         }
 
         $methodDefinition->attributes = $reflection->getAttributes();
+        $methodDefinition->summary = $reflection->getSummary();
         $methodDefinition->description = $reflection->getDescription();
 
         $parameters = [];

@@ -8,27 +8,27 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Tochka\Hydrator\Contracts\ExtractorInterface;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
-use Tochka\Hydrator\Definitions\DTO\Collection;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\RootContext;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\ContainerException;
 use Tochka\Hydrator\Exceptions\NoTypeHandlerException;
-use Tochka\Hydrator\TypeSystem\TypeFromValue;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
 
+/**
+ * @psalm-api
+ *
+ * @psalm-import-type BeforeHydrateType from ValueExtractorInterface
+ */
 class Extractor implements ExtractorInterface
 {
-    private ContainerInterface $container;
-    private TypeFromValue $typeFromValue;
     /** @var list<ValueExtractorInterface> */
     private array $extractors = [];
 
-    public function __construct(ContainerInterface $container, TypeFromValue $typeFromValue)
-    {
-        $this->container = $container;
-        $this->typeFromValue = $typeFromValue;
+    public function __construct(
+        private readonly ContainerInterface $container
+    ) {
     }
 
     /**
@@ -44,7 +44,7 @@ class Extractor implements ExtractorInterface
         }
 
         try {
-            /** @var TExtractor $extractorInstance*/
+            /** @var TExtractor $extractorInstance */
             $extractorInstance = $this->container->get($extractor);
             $this->extractors[] = $extractorInstance;
         } catch (ContainerExceptionInterface $e) {
@@ -55,44 +55,35 @@ class Extractor implements ExtractorInterface
         }
     }
 
-    /**
-     * @template TValueType
-     * @template TReturnType
-     * @param TValueType $value
-     * @param TypeInterface<TReturnType> $type
-     * @return TReturnType
-     */
     public function extract(
         mixed $value,
         TypeInterface $type,
         ?Collection $attributes = null,
         ?Context $context = null
     ): mixed {
-        $fromContainer = new FromContainer($value, $this->typeFromValue->inferType($value));
         $toContainer = new ToContainer($type, $attributes ?? new Collection());
-        return $this->handle($this->extractors, $fromContainer, $toContainer, $context ?? new RootContext());
+        return $this->handle($this->extractors, $value, $toContainer, $context ?? new RootContext());
     }
 
     /**
-     * @template TValueType
      * @template TReturnType
      * @param list<ValueExtractorInterface> $extractors
-     * @param FromContainer<TValueType> $from
+     * @param BeforeHydrateType $value
      * @param ToContainer<TReturnType> $to
      * @param Context $context
      * @return TReturnType
      */
-    private function handle(array $extractors, FromContainer $from, ToContainer $to, Context $context): mixed
+    private function handle(array $extractors, mixed $value, ToContainer $to, Context $context): mixed
     {
         $extractor = array_shift($extractors);
 
         if ($extractor !== null) {
             return $extractor->extract(
-                $from,
+                $value,
                 $to,
                 $context,
-                function (FromContainer $from, ToContainer $to, Context $context) use ($extractors): mixed {
-                    return $this->handle($extractors, $from, $to, $context);
+                function (mixed $value, ToContainer $to, Context $context) use ($extractors): mixed {
+                    return $this->handle($extractors, $value, $to, $context);
                 }
             );
         }

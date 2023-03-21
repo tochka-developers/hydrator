@@ -2,9 +2,12 @@
 <psalm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns="https://getpsalm.org/schema/config"
        xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
-       errorLevel="1"
+       errorLevel="2"
        findUnusedBaselineEntry="true"
        findUnusedCode="true"
+       memoizeMethodCallResults="true"
+       disableSuppressAll="true"
+       findUnusedPsalmSuppress="true"
 >
     <projectFiles>
         <directory name="src"/>
@@ -12,7 +15,4 @@
             <directory name="vendor"/>
         </ignoreFiles>
     </projectFiles>
-    <plugins>
-        <pluginClass class="Psalm\LaravelPlugin\Plugin"/>
-    </plugins>
 </psalm>

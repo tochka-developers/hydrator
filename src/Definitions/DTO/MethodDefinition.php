@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Tochka\Hydrator\Definitions\DTO;
 
-use Tochka\Hydrator\TypeSystem\Types\MixedType;
+use Tochka\TypeParser\Collection;
+use Tochka\TypeParser\TypeSystem\Types\MixedType;
 
+/**
+ * @psalm-api
+ */
 class MethodDefinition implements DefinitionInterface
 {
     /** @var class-string */
@@ -16,6 +20,7 @@ class MethodDefinition implements DefinitionInterface
     public ReturnDefinition $returnDefinition;
     /** @var Collection<object> */
     public Collection $attributes;
+    public ?string $summary = null;
     public ?string $description = null;
 
     /**

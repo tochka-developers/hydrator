@@ -6,12 +6,12 @@ namespace Tochka\Hydrator\Definitions;
 
 use Tochka\Hydrator\Contracts\ClassDefinitionParserInterface;
 use Tochka\Hydrator\Definitions\DTO\ValueDefinition;
-use Tochka\Hydrator\ExtendedReflection\ExtendedValueReflectionInterface;
-use Tochka\Hydrator\TypeSystem\TypeInterface;
-use Tochka\Hydrator\TypeSystem\Types\ArrayType;
-use Tochka\Hydrator\TypeSystem\Types\IntersectionType;
-use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
-use Tochka\Hydrator\TypeSystem\Types\UnionType;
+use Tochka\TypeParser\Contracts\ExtendedValueReflectionInterface;
+use Tochka\TypeParser\TypeSystem\TypeInterface;
+use Tochka\TypeParser\TypeSystem\Types\ArrayType;
+use Tochka\TypeParser\TypeSystem\Types\IntersectionType;
+use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
+use Tochka\TypeParser\TypeSystem\Types\UnionType;
 
 trait GetValueDefinition
 {
@@ -24,6 +24,7 @@ trait GetValueDefinition
             $property->setDefaultValue($reflection->getDefaultValue());
         }
 
+        $property->summary = $reflection->getSummary();
         $property->description = $reflection->getDescription();
 
         return $property;

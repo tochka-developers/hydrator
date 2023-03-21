@@ -15,22 +15,18 @@ use Tochka\Hydrator\Exceptions\BaseTransformingException;
 use Tochka\Hydrator\Exceptions\NoDefaultValueException;
 use Tochka\Hydrator\Exceptions\NotPresentRequiredValueException;
 use Tochka\Hydrator\Exceptions\SameTransformingFieldException;
-use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
+use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
 
+/**
+ * @psalm-api
+ */
 class ExtractFactory
 {
-    private ClassDefinitionParserInterface $classDefinitionParser;
-    private MethodDefinitionParserInterface $methodDefinitionParser;
-    private ExtractorInterface $extractor;
-
     public function __construct(
-        ClassDefinitionParserInterface $classDefinitionParser,
-        MethodDefinitionParserInterface $methodDefinitionParser,
-        ExtractorInterface $extractor,
+        private readonly ClassDefinitionParserInterface $classDefinitionParser,
+        private readonly MethodDefinitionParserInterface $methodDefinitionParser,
+        private readonly ExtractorInterface $extractor,
     ) {
-        $this->classDefinitionParser = $classDefinitionParser;
-        $this->methodDefinitionParser = $methodDefinitionParser;
-        $this->extractor = $extractor;
     }
 
     /**

@@ -6,6 +6,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class NoDefaultError extends Error
 {
     public const CODE = 'no_default_value';

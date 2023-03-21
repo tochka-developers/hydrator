@@ -13,14 +13,15 @@ use Tochka\Hydrator\Exceptions\Errors\Errors;
 class SameTransformingFieldException extends BaseTransformingException
 {
     /**
-     * @param array<BaseTransformingException> $exceptions
+     * @param list<BaseTransformingException> $exceptions
      */
     public function __construct(array $exceptions, Context $context, ?\Throwable $previous = null)
     {
         $errors = [];
 
         foreach ($exceptions as $exception) {
-            if ($exception instanceof self) {
+            /** @psalm-suppress DocblockTypeContradiction */
+            if ($exception instanceof SameTransformingFieldException) {
                 $errors[] = $exception->getError()->errors;
             } else {
                 $errors[] = [$exception->getError()];

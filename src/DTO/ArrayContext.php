@@ -6,8 +6,11 @@ namespace Tochka\Hydrator\DTO;
 
 class ArrayContext extends Context
 {
+    /**
+     * @param class-string|null $className
+     */
     public function __construct(
-        public readonly string|int $arrayKey,
+        string|int $arrayKey,
         ?string $className = null,
         ?Context $previous = null
     ) {

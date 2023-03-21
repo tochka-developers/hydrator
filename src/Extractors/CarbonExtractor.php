@@ -8,23 +8,25 @@ use Carbon\Carbon;
 use Tochka\Hydrator\Attributes\TimeZone;
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
 use Tochka\Hydrator\Exceptions\UnexpectedValueException;
-use Tochka\Hydrator\TypeSystem\Types\NamedObjectType;
-use Tochka\Hydrator\TypeSystem\Types\StringType;
+use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
 
+/**
+ * @psalm-api
+ */
 final class CarbonExtractor implements ValueExtractorInterface
 {
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
+        /** @psalm-suppress RedundantCondition */
         if (!$to->type instanceof NamedObjectType || !is_a($to->type->className, Carbon::class, true)) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
-        if (!$from->type instanceof StringType) {
-            throw new UnexpectedTypeException($to->type, $from->type, $context);
+        if (!is_string($value)) {
+            throw new UnexpectedTypeException(gettype($value), 'string', $context);
         }
 
         try {
@@ -35,9 +37,9 @@ final class CarbonExtractor implements ValueExtractorInterface
             $attribute = $to->attributes->type(TimeZone::class)->first();
             $tz = $attribute?->timezone;
 
-            return Carbon::parse($from->value, $tz);
+            return Carbon::parse($value, $tz);
         } catch (\Throwable $e) {
-            throw new UnexpectedValueException($from->value, 'datetime-string', $context, $e);
+            throw new UnexpectedValueException($value, 'datetime-string', $context, $e);
         }
     }
 }

@@ -6,6 +6,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class UnionTypeError extends Error
 {
     public const CODE = 'union_type_resolve';

@@ -6,21 +6,23 @@ namespace Tochka\Hydrator\Extractors;
 
 use Tochka\Hydrator\Contracts\ValueExtractorInterface;
 use Tochka\Hydrator\DTO\Context;
-use Tochka\Hydrator\DTO\FromContainer;
 use Tochka\Hydrator\DTO\ToContainer;
 use Tochka\Hydrator\Exceptions\UnexpectedTypeException;
-use Tochka\Hydrator\TypeSystem\Types\NullType;
+use Tochka\TypeParser\TypeSystem\Types\NullType;
 
+/**
+ * @psalm-api
+ */
 final class NullExtractor implements ValueExtractorInterface
 {
-    public function extract(FromContainer $from, ToContainer $to, Context $context, callable $next): mixed
+    public function extract(mixed $value, ToContainer $to, Context $context, callable $next): mixed
     {
         if (!$to->type instanceof NullType) {
-            return $next($from, $to, $context);
+            return $next($value, $to, $context);
         }
 
-        if ($from->value !== null) {
-            throw new UnexpectedTypeException($to->type, $from->type, $context);
+        if ($value !== null) {
+            throw new UnexpectedTypeException(gettype($value), 'null', $context);
         }
 
         return null;

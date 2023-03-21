@@ -4,6 +4,9 @@ namespace Tochka\Hydrator\Exceptions\Errors;
 
 use Tochka\Hydrator\DTO\Context;
 
+/**
+ * @psalm-api
+ */
 class MakeTargetError extends Error
 {
     public const CODE = 'make_target';
