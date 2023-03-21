@@ -21,7 +21,6 @@ use Tochka\TypeParser\TypeSystem\Types\NamedObjectType;
  */
 final class NamedObjectExtractor implements ValueExtractorInterface
 {
-
     public function __construct(
         private readonly ClassDefinitionParserInterface $classDefinitionParser,
         private readonly ExtractFactory $extractor

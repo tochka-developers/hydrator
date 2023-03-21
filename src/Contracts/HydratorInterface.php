@@ -2,10 +2,8 @@
 
 namespace Tochka\Hydrator\Contracts;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Tochka\Hydrator\DTO\Context;
 use Tochka\TypeParser\Collection;
-use Tochka\TypeParser\TypeSystem\TypeInterface;
 
 /**
  * @psalm-api

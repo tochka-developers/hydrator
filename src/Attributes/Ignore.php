@@ -18,5 +18,4 @@ use Doctrine\Common\Annotations\Annotation\Target;
 #[NamedArgumentConstructor]
 class Ignore
 {
-
 }
